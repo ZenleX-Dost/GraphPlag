@@ -12,13 +12,26 @@ from typing import List
 
 from graphplag import PlagiarismDetector
 from graphplag.detection.report_generator import ReportGenerator
+from graphplag.utils.file_parser import FileParser
 
 
 def read_file(file_path: str) -> str:
-    """Read content from a file"""
+    """Read content from a file (supports PDF, DOCX, TXT, MD)"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return f.read()
+        file_parser = FileParser()
+        path = Path(file_path)
+        
+        # Check if file format is supported
+        if file_parser.is_supported(file_path):
+            # Use file parser for supported formats
+            text = file_parser.parse_file(file_path)
+            print(f"    Parsed {path.suffix.upper()} file: {path.name}")
+            print(f"    Extracted {len(text)} characters")
+            return text
+        else:
+            # Fallback to simple text reading
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
     except Exception as e:
         print(f"❌ Error reading file {file_path}: {e}")
         sys.exit(1)
@@ -29,13 +42,13 @@ def compare_documents(args):
     # Read documents
     if args.file1:
         doc1 = read_file(args.file1)
-        print(f"📄 Loaded Document 1: {args.file1}")
+        print(f" Loaded Document 1: {args.file1}")
     else:
         doc1 = args.text1
     
     if args.file2:
         doc2 = read_file(args.file2)
-        print(f"📄 Loaded Document 2: {args.file2}")
+        print(f" Loaded Document 2: {args.file2}")
     else:
         doc2 = args.text2
     
@@ -44,7 +57,7 @@ def compare_documents(args):
         sys.exit(1)
     
     # Initialize detector
-    print(f"\n🔧 Initializing detector...")
+    print(f"\n Initializing detector...")
     print(f"   Method: {args.method}")
     print(f"   Threshold: {args.threshold}")
     print(f"   Language: {args.language}")
@@ -56,20 +69,20 @@ def compare_documents(args):
     )
     
     # Detect plagiarism
-    print("\n🔍 Analyzing documents...")
+    print("\n Analyzing documents...")
     report = detector.detect_plagiarism(doc1, doc2)
     
     # Display results
     print("\n" + "="*60)
-    print("📊 PLAGIARISM DETECTION RESULTS")
+    print(" PLAGIARISM DETECTION RESULTS")
     print("="*60)
-    print(f"\n📈 Similarity Score: {report.similarity_score:.2%}")
-    print(f"🎯 Threshold: {args.threshold:.2%}")
-    print(f"⚠️  Plagiarism Detected: {'YES ✓' if report.is_plagiarism else 'NO ✗'}")
-    print(f"🔬 Method Used: {report.method.upper()}")
+    print(f"\n Similarity Score: {report.similarity_score:.2%}")
+    print(f" Threshold: {args.threshold:.2%}")
+    print(f"  Plagiarism Detected: {'YES ✓' if report.is_plagiarism else 'NO ✗'}")
+    print(f" Method Used: {report.method.upper()}")
     
     # Interpretation
-    print("\n📝 Interpretation:")
+    print("\n Interpretation:")
     if report.similarity_score >= 0.9:
         print("   🔴 Very High Similarity - Strong evidence of plagiarism")
     elif report.similarity_score >= 0.7:
@@ -98,12 +111,12 @@ def compare_documents(args):
             }
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(report_data, f, indent=2)
-            print(f"\n💾 Report saved to: {output_path}")
+            print(f"\n Report saved to: {output_path}")
         
         elif output_path.suffix == '.html':
             # Save as HTML
             report_gen.generate_html(report, str(output_path))
-            print(f"\n💾 HTML report saved to: {output_path}")
+            print(f"\n HTML report saved to: {output_path}")
         
         else:
             # Save as text
@@ -114,7 +127,7 @@ def compare_documents(args):
                 f.write(f"Plagiarism Detected: {'YES' if report.is_plagiarism else 'NO'}\n")
                 f.write(f"Method: {report.method}\n")
                 f.write(f"Threshold: {args.threshold:.2%}\n")
-            print(f"\n💾 Report saved to: {output_path}")
+            print(f"\n Report saved to: {output_path}")
 
 
 def batch_compare(args):
@@ -133,14 +146,14 @@ def batch_compare(args):
         for file_path in sorted(dir_path.glob('*.txt')):
             documents.append(read_file(str(file_path)))
             doc_names.append(file_path.name)
-            print(f"📄 Loaded: {file_path.name}")
+            print(f" Loaded: {file_path.name}")
     
     elif args.files:
         # Read specific files
         for file_path in args.files:
             documents.append(read_file(file_path))
             doc_names.append(Path(file_path).name)
-            print(f"📄 Loaded: {Path(file_path).name}")
+            print(f" Loaded: {Path(file_path).name}")
     
     else:
         print("❌ Error: Provide either --directory or --files")
@@ -151,7 +164,7 @@ def batch_compare(args):
         sys.exit(1)
     
     # Initialize detector
-    print(f"\n🔧 Initializing detector...")
+    print(f"\n Initializing detector...")
     detector = PlagiarismDetector(
         method=args.method,
         threshold=args.threshold,
@@ -159,7 +172,7 @@ def batch_compare(args):
     )
     
     # Compare all pairs
-    print(f"\n🔍 Comparing {len(documents)} documents...")
+    print(f"\n Comparing {len(documents)} documents...")
     suspicious_pairs = []
     
     for i in range(len(documents)):
@@ -170,22 +183,22 @@ def batch_compare(args):
     
     # Display results
     print("\n" + "="*60)
-    print("📊 BATCH COMPARISON RESULTS")
+    print(" BATCH COMPARISON RESULTS")
     print("="*60)
-    print(f"\n📚 Total Documents: {len(documents)}")
-    print(f"🔍 Comparisons Made: {len(documents) * (len(documents) - 1) // 2}")
-    print(f"⚠️  Suspicious Pairs: {len(suspicious_pairs)}")
-    print(f"🎯 Threshold: {args.threshold:.2%}")
+    print(f"\n Total Documents: {len(documents)}")
+    print(f" Comparisons Made: {len(documents) * (len(documents) - 1) // 2}")
+    print(f"  Suspicious Pairs: {len(suspicious_pairs)}")
+    print(f" Threshold: {args.threshold:.2%}")
     
     if suspicious_pairs:
-        print(f"\n🚨 Suspicious Pairs (Similarity ≥ {args.threshold:.0%}):")
+        print(f"\n Suspicious Pairs (Similarity ≥ {args.threshold:.0%}):")
         print("-" * 60)
         for i, j, score in sorted(suspicious_pairs, key=lambda x: x[2], reverse=True):
             print(f"   {doc_names[i]} ↔ {doc_names[j]}")
             print(f"   Similarity: {score:.2%}")
             print()
     else:
-        print("\n✅ No suspicious pairs found!")
+        print("\n No suspicious pairs found!")
     
     print("="*60)
     
@@ -209,7 +222,7 @@ def batch_compare(args):
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(report_data, f, indent=2)
         
-        print(f"\n💾 Report saved to: {output_path}")
+        print(f"\n Report saved to: {output_path}")
 
 
 def main():
@@ -278,7 +291,7 @@ For more information, visit: https://github.com/ZenleX-Dost/GraphPlag
     
     # Print banner
     print("\n" + "="*60)
-    print("🔍 GraphPlag - Plagiarism Detection System")
+    print(" GraphPlag - Plagiarism Detection System")
     print("="*60 + "\n")
     
     # Execute command

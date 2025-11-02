@@ -1,0 +1,14 @@
+Sample Document 2 - Similar Content
+
+Machine learning, a branch of artificial intelligence, enables computer systems to learn and improve from experience automatically without explicit programming. It emphasizes developing programs that can access and utilize data to learn independently.
+
+The learning process starts with data observations, including examples, direct experiences, or instructions, to identify patterns and make improved future decisions based on provided examples. The main goal is enabling computers to learn autonomously without human assistance and modify actions accordingly.
+
+Machine learning applications span multiple domains:
+
+Healthcare: Medical diagnosis and treatment forecasting
+Financial Services: Detecting fraudulent activities and evaluating risks
+Online Retail: Personalized product suggestions
+Automotive: Self-driving cars
+
+Machine learning's ongoing development suggests it will transform our technology interactions and problem-solving approaches.

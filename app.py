@@ -9,16 +9,18 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import time
 
 from graphplag import PlagiarismDetector
 from graphplag.detection.report_generator import ReportGenerator
+from graphplag.utils.file_parser import FileParser
 
 
 # Global detector instance
 detector = None
 report_gen = ReportGenerator()
+file_parser = FileParser()
 
 
 def initialize_detector(method: str, threshold: float, language: str) -> str:
@@ -35,11 +37,43 @@ def initialize_detector(method: str, threshold: float, language: str) -> str:
         return f"❌ Error: {str(e)}"
 
 
-def compare_documents(doc1: str, doc2: str, method: str, threshold: float, 
-                     language: str) -> Tuple[str, str, str]:
+def extract_text_from_file(file) -> str:
+    """Extract text from uploaded file"""
+    if file is None:
+        return ""
+    
+    try:
+        # Get file path
+        file_path = file.name if hasattr(file, 'name') else str(file)
+        
+        # Parse the file
+        text = file_parser.parse_file(file_path)
+        return text
+    except Exception as e:
+        return f"❌ Error reading file: {str(e)}"
+
+
+def compare_documents(doc1_text: str, doc1_file, doc2_text: str, doc2_file, 
+                     method: str, threshold: float, language: str) -> Tuple[str, str, str]:
     """Compare two documents for plagiarism"""
+    # Get document 1 content
+    if doc1_file is not None:
+        doc1 = extract_text_from_file(doc1_file)
+        if doc1.startswith("❌"):
+            return doc1, None, ""
+    else:
+        doc1 = doc1_text
+    
+    # Get document 2 content
+    if doc2_file is not None:
+        doc2 = extract_text_from_file(doc2_file)
+        if doc2.startswith("❌"):
+            return doc2, None, ""
+    else:
+        doc2 = doc2_text
+    
     if not doc1 or not doc2:
-        return "❌ Please provide both documents", "", ""
+        return "❌ Please provide both documents (either text or files)", None, ""
     
     try:
         # Initialize detector if needed
@@ -281,19 +315,34 @@ with gr.Blocks(title="GraphPlag - Plagiarism Detection", theme=gr.themes.Soft())
         
         # Tab 1: Single Comparison
         with gr.Tab(" Compare Two Documents"):
-            gr.Markdown("### Compare two documents for plagiarism")
+            gr.Markdown("""
+            ### Compare two documents for plagiarism
+            **Supports:** PDF, DOCX, TXT, MD files or direct text input
+            """)
             
             with gr.Row():
                 with gr.Column():
+                    gr.Markdown("#### Document 1")
+                    doc1_file = gr.File(
+                        label="Upload File (PDF, DOCX, TXT, MD)",
+                        file_types=[".pdf", ".docx", ".txt", ".md", ".markdown"]
+                    )
+                    gr.Markdown("**OR enter text directly:**")
                     doc1_input = gr.Textbox(
-                        label="Document 1",
-                        placeholder="Enter the first document here...",
+                        label="",
+                        placeholder="Paste or type document content here...",
                         lines=10
                     )
                 with gr.Column():
+                    gr.Markdown("#### Document 2")
+                    doc2_file = gr.File(
+                        label="Upload File (PDF, DOCX, TXT, MD)",
+                        file_types=[".pdf", ".docx", ".txt", ".md", ".markdown"]
+                    )
+                    gr.Markdown("**OR enter text directly:**")
                     doc2_input = gr.Textbox(
-                        label="Document 2",
-                        placeholder="Enter the second document here...",
+                        label="",
+                        placeholder="Paste or type document content here...",
                         lines=10
                     )
             
@@ -329,7 +378,7 @@ with gr.Blocks(title="GraphPlag - Plagiarism Detection", theme=gr.themes.Soft())
             
             compare_btn.click(
                 fn=compare_documents,
-                inputs=[doc1_input, doc2_input, method_single, threshold_single, language_single],
+                inputs=[doc1_input, doc1_file, doc2_input, doc2_file, method_single, threshold_single, language_single],
                 outputs=[result_output, plot_output, html_output]
             )
         
