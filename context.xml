@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project_master_prompt>
+  
+  <project_metadata>
+    <name>GraphPlag</name>
+    <tagline>Semantic Graph-Based Plagiarism Detection System</tagline>
+    <approach>semantic_non_lexical</approach>
+    <research_potential>publishable in graph models for NLP and multilingual semantic plagiarism detection</research_potential>
+  </project_metadata>
+
+  <project_overview>
+    <description>
+      GraphPlag is an advanced plagiarism detection system that uses semantic graph representations 
+      rather than traditional lexical matching. Documents are transformed into syntactic dependency 
+      graphs where sentences become nodes and their relationships become edges. The system leverages 
+      Graph Kernels and Graph Neural Networks (GNNs) to compute semantic similarity scores between documents.
+    </description>
+    
+    <core_innovation>
+      Moves beyond surface-level text comparison to capture deep semantic relationships, 
+      enabling detection of paraphrased plagiarism and cross-lingual semantic copying.
+    </core_innovation>
+  </project_overview>
+
+  <technical_architecture>
+    
+    <pipeline>
+      <stage order="1" name="document_preprocessing">
+        <input>Raw text documents</input>
+        <process>Tokenization, sentence segmentation, language detection</process>
+        <output>Cleaned, structured text</output>
+      </stage>
+      
+      <stage order="2" name="graph_construction">
+        <input>Processed text</input>
+        <process>
+          - Parse documents using dependency parsers (e.g., spaCy, Stanza)
+          - Extract syntactic dependencies
+          - Create graph representation where:
+            * Nodes = sentences or semantic units
+            * Edges = syntactic/semantic relationships (dependency relations)
+            * Node features = sentence embeddings (BERT, RoBERTa, or multilingual models)
+            * Edge features = dependency types, weights
+        </process>
+        <output>Document graphs (networkx or PyTorch Geometric format)</output>
+      </stage>
+      
+      <stage order="3" name="similarity_computation">
+        <input>Pair of document graphs</input>
+        <process>
+          Apply two complementary methods:
+          1. Graph Kernels (Weisfeiler-Lehman, Random Walk, Shortest Path kernels)
+          2. Graph Neural Networks (GCN, GAT, GraphSAGE)
+        </process>
+        <output>Semantic similarity score [0,1]</output>
+      </stage>
+      
+      <stage order="4" name="plagiarism_detection">
+        <input>Similarity scores</input>
+        <process>
+          - Threshold-based classification
+          - Identify plagiarized segments
+          - Generate visualization and reports
+        </process>
+        <output>Plagiarism report with confidence scores</output>
+      </stage>
+    </pipeline>
+
+    <technology_stack>
+      <category name="core_language">
+        <technology>Python 3.9+</technology>
+      </category>
+      
+      <category name="nlp_processing">
+        <technology>spaCy (dependency parsing)</technology>
+        <technology>Stanza (multilingual support)</technology>
+        <technology>transformers (Hugging Face - sentence embeddings)</technology>
+        <technology>sentence-transformers (multilingual models)</technology>
+      </category>
+      
+      <category name="graph_processing">
+        <technology>NetworkX (graph creation and manipulation)</technology>
+        <technology>PyTorch Geometric (GNN implementation)</technology>
+        <technology>grakel (Graph Kernel library)</technology>
+      </category>
+      
+      <category name="machine_learning">
+        <technology>PyTorch (deep learning framework)</technology>
+        <technology>scikit-learn (classical ML, evaluation metrics)</technology>
+      </category>
+      
+      <category name="visualization">
+        <technology>matplotlib</technology>
+        <technology>plotly (interactive graph visualization)</technology>
+        <technology>pyvis (network visualization)</technology>
+      </category>
+    </technology_stack>
+
+  </technical_architecture>
+
+  <implementation_requirements>
+    
+    <module name="DocumentParser">
+      <responsibility>Convert raw text documents into structured format</responsibility>
+      <key_methods>
+        <method>parse_document(text) -> Document</method>
+        <method>extract_sentences(document) -> List[Sentence]</method>
+        <method>detect_language(text) -> str</method>
+      </key_methods>
+    </module>
+
+    <module name="GraphBuilder">
+      <responsibility>Transform documents into semantic dependency graphs</responsibility>
+      <key_methods>
+        <method>build_graph(document) -> nx.Graph</method>
+        <method>extract_dependencies(sentence) -> List[Dependency]</method>
+        <method>create_node_features(sentence) -> np.array</method>
+        <method>create_edge_features(dependency) -> dict</method>
+      </key_methods>
+      <implementation_notes>
+        - Use spaCy's dependency parser for syntactic analysis
+        - Generate sentence embeddings using multilingual BERT or Sentence-BERT
+        - Store graph in both NetworkX and PyG formats for flexibility
+      </implementation_notes>
+    </module>
+
+    <module name="GraphKernelSimilarity">
+      <responsibility>Compute similarity using graph kernel methods</responsibility>
+      <key_methods>
+        <method>compute_wl_kernel(graph1, graph2) -> float</method>
+        <method>compute_random_walk_kernel(graph1, graph2) -> float</method>
+        <method>compute_shortest_path_kernel(graph1, graph2) -> float</method>
+        <method>ensemble_kernel_score(graph1, graph2) -> float</method>
+      </key_methods>
+      <implementation_notes>
+        - Use grakel library for standard graph kernels
+        - Implement kernel normalization for fair comparison
+        - Consider computational complexity for large graphs
+      </implementation_notes>
+    </module>
+
+    <module name="GNNSimilarity">
+      <responsibility>Compute similarity using Graph Neural Networks</responsibility>
+      <architecture>
+        <layer type="GCN/GAT">Graph convolution layers (3-5 layers)</layer>
+        <pooling>Global pooling (mean, max, or attention-based)</pooling>
+        <embedding>Graph-level embeddings</embedding>
+        <similarity>Cosine similarity or learned distance metric</similarity>
+      </architecture>
+      <key_methods>
+        <method>train_gnn(training_pairs, labels)</method>
+        <method>encode_graph(graph) -> embedding</method>
+        <method>compute_similarity(embedding1, embedding2) -> float</method>
+      </key_methods>
+      <training_strategy>
+        - Use Siamese network architecture
+        - Contrastive loss or triplet loss
+        - Train on labeled plagiarism datasets (PAN, custom datasets)
+      </training_strategy>
+    </module>
+
+    <module name="PlagiarismDetector">
+      <responsibility>Main orchestrator for plagiarism detection</responsibility>
+      <key_methods>
+        <method>detect_plagiarism(doc1, doc2) -> PlagiarismReport</method>
+        <method>batch_compare(document_corpus) -> SimilarityMatrix</method>
+        <method>identify_suspicious_pairs(threshold) -> List[Pair]</method>
+        <method>generate_report(comparison_results) -> Report</method>
+      </key_methods>
+    </module>
+
+    <module name="Visualizer">
+      <responsibility>Visualize graphs and detection results</responsibility>
+      <key_methods>
+        <method>visualize_graph(graph, highlight_nodes=None)</method>
+        <method>visualize_similarity_heatmap(similarity_matrix)</method>
+        <method>visualize_plagiarism_alignment(doc1, doc2, matches)</method>
+      </key_methods>
+    </module>
+
+  </implementation_requirements>
+
+  <datasets_and_evaluation>
+    <training_datasets>
+      <dataset>PAN Plagiarism Detection Corpus</dataset>
+      <dataset>CLEF-IP (Patent plagiarism)</dataset>
+      <dataset>Custom synthetic dataset with paraphrased content</dataset>
+    </training_datasets>
+    
+    <evaluation_metrics>
+      <metric>Precision, Recall, F1-Score</metric>
+      <metric>ROC-AUC</metric>
+      <metric>Detection granularity (sentence-level vs document-level)</metric>
+      <metric>Cross-lingual performance (for multilingual support)</metric>
+    </evaluation_metrics>
+  </datasets_and_evaluation>
+
+  <advanced_features>
+    <feature name="multilingual_support">
+      Use multilingual sentence transformers (paraphrase-multilingual-mpnet-base-v2)
+      to enable cross-lingual plagiarism detection
+    </feature>
+    
+    <feature name="segment_level_detection">
+      Beyond document-level scores, identify specific plagiarized segments
+      using subgraph matching and alignment techniques
+    </feature>
+    
+    <feature name="paraphrase_robustness">
+      Graph representation inherently captures semantic similarity even when
+      surface-level text is heavily paraphrased
+    </feature>
+    
+    <feature name="explainability">
+      Visualize which graph substructures contributed most to similarity score
+      using attention mechanisms or graph attribution methods
+    </feature>
+  </advanced_features>
+
+  <project_structure>
+    <directory_layout>
+      graphplag/
+      ├── __init__.py
+      ├── core/
+      │   ├── document_parser.py
+      │   ├── graph_builder.py
+      │   └── models.py
+      ├── similarity/
+      │   ├── graph_kernels.py
+      │   ├── gnn_models.py
+      │   └── ensemble.py
+      ├── detection/
+      │   ├── detector.py
+      │   └── report_generator.py
+      ├── utils/
+      │   ├── preprocessing.py
+      │   ├── visualization.py
+      │   └── metrics.py
+      ├── data/
+      │   ├── loaders.py
+      │   └── datasets/
+      ├── configs/
+      │   └── config.yaml
+      └── experiments/
+          ├── train_gnn.py
+          ├── evaluate.py
+          └── benchmark.py
+      
+      tests/
+      ├── test_parser.py
+      ├── test_graph_builder.py
+      ├── test_similarity.py
+      └── test_detector.py
+      
+      notebooks/
+      ├── 01_data_exploration.ipynb
+      ├── 02_graph_construction.ipynb
+      ├── 03_kernel_experiments.ipynb
+      └── 04_gnn_training.ipynb
+      
+      docs/
+      ├── API.md
+      ├── ARCHITECTURE.md
+      └── RESEARCH_NOTES.md
+      
+      requirements.txt
+      setup.py
+      README.md
+      LICENSE
+    </directory_layout>
+  </project_structure>
+
+  <development_phases>
+    <phase number="1" name="foundation">
+      <tasks>
+        - Set up project structure
+        - Implement DocumentParser with spaCy integration
+        - Create basic GraphBuilder for single documents
+        - Write unit tests for core functionality
+      </tasks>
+    </phase>
+    
+    <phase number="2" name="graph_kernels">
+      <tasks>
+        - Implement Weisfeiler-Lehman kernel
+        - Implement Random Walk kernel
+        - Create kernel ensemble method
+        - Benchmark on small dataset
+      </tasks>
+    </phase>
+    
+    <phase number="3" name="gnn_development">
+      <tasks>
+        - Design GNN architecture (GCN/GAT)
+        - Implement Siamese network structure
+        - Prepare training pipeline
+        - Train on plagiarism datasets
+      </tasks>
+    </phase>
+    
+    <phase number="4" name="detection_system">
+      <tasks>
+        - Build PlagiarismDetector orchestrator
+        - Implement threshold-based classification
+        - Add segment-level detection
+        - Create report generation
+      </tasks>
+    </phase>
+    
+    <phase number="5" name="evaluation_and_optimization">
+      <tasks>
+        - Comprehensive evaluation on benchmark datasets
+        - Compare kernel vs GNN approaches
+        - Optimize hyperparameters
+        - Performance profiling and optimization
+      </tasks>
+    </phase>
+    
+    <phase number="6" name="multilingual_and_advanced">
+      <tasks>
+        - Integrate multilingual models
+        - Add cross-lingual detection
+        - Implement explainability features
+        - Create interactive visualizations
+      </tasks>
+    </phase>
+  </development_phases>
+
+  <research_contributions>
+    <contribution>Novel application of graph kernels to plagiarism detection</contribution>
+    <contribution>Comparative study: Graph Kernels vs GNNs for semantic similarity</contribution>
+    <contribution>Multilingual semantic plagiarism detection framework</contribution>
+    <contribution>Robustness to paraphrasing through semantic graph representation</contribution>
+    <contribution>Open-source toolkit for graph-based document analysis</contribution>
+  </research_contributions>
+
+  <success_criteria>
+    <criterion>Achieve >85% F1-score on PAN plagiarism corpus</criterion>
+    <criterion>Demonstrate superiority over lexical methods for paraphrased plagiarism</criterion>
+    <criterion>Support at least 5 languages with cross-lingual detection</criterion>
+    <criterion>Process document pairs in <5 seconds on average</criterion>
+    <criterion>Publish research paper in reputable NLP/IR conference or journal</criterion>
+  </success_criteria>
+
+  <documentation_requirements>
+    <requirement>Comprehensive API documentation with examples</requirement>
+    <requirement>Architecture documentation with system diagrams</requirement>
+    <requirement>Tutorial notebooks for common use cases</requirement>
+    <requirement>Research paper draft documenting methodology and results</requirement>
+    <requirement>README with quick start guide and benchmarks</requirement>
+  </documentation_requirements>
+
+  <instructions_for_copilot>
+    This is a research-oriented project combining NLP, graph theory, and deep learning.
+    
+    Implementation priorities:
+    1. Start with solid foundations (parsing, graph construction)
+    2. Implement both kernel and GNN approaches independently
+    3. Focus on modularity - each component should be testable and reusable
+    4. Emphasize reproducibility - log all experiments, seed random states
+    5. Create clear visualizations to understand graph representations
+    6. Write clean, documented code suitable for research publication
+    
+    When implementing:
+    - Use type hints throughout
+    - Write docstrings for all public methods
+    - Include inline comments for complex graph operations
+    - Create unit tests for each module
+    - Use configuration files for hyperparameters
+    - Log experiments with wandb or tensorboard
+    
+    The goal is both a working system AND publishable research.
+  </instructions_for_copilot>
+
+</project_master_prompt>

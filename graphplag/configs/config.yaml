@@ -1,0 +1,91 @@
+# GraphPlag Configuration
+
+# Document Parser Settings
+parser:
+  default_language: "en"
+  auto_detect_language: true
+  spacy_models:
+    en: "en_core_web_sm"
+    es: "es_core_news_sm"
+    fr: "fr_core_news_sm"
+    de: "de_core_news_sm"
+
+# Graph Builder Settings
+graph_builder:
+  embedding_model: "paraphrase-multilingual-mpnet-base-v2"
+  edge_strategy: "sequential"  # Options: sequential, dependency, hybrid
+  max_edge_distance: 3
+  
+# Similarity Computation
+similarity:
+  # Graph Kernels
+  kernels:
+    enabled: true
+    types: ["wl", "rw", "sp"]  # Weisfeiler-Lehman, Random Walk, Shortest Path
+    normalize: true
+    wl_iterations: 5
+    ensemble_weights:
+      wl: 0.4
+      rw: 0.3
+      sp: 0.3
+  
+  # GNN Settings
+  gnn:
+    enabled: true
+    model_type: "gcn"  # Options: gcn, gat
+    input_dim: 768
+    hidden_dim: 128
+    output_dim: 64
+    num_layers: 3
+    dropout: 0.2
+    pooling: "mean"  # Options: mean, max, attention
+    similarity_metric: "cosine"  # Options: cosine, euclidean, learned
+
+# Plagiarism Detection
+detection:
+  method: "ensemble"  # Options: kernel, gnn, ensemble
+  threshold: 0.70
+  min_sentence_length: 5
+  segment_detection: true
+  
+# Training Settings
+training:
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.001
+  validation_split: 0.2
+  early_stopping_patience: 10
+  save_best_model: true
+  checkpoint_dir: "./checkpoints"
+
+# Evaluation
+evaluation:
+  metrics: ["accuracy", "precision", "recall", "f1_score", "roc_auc"]
+  cross_validation: 5
+  test_split: 0.2
+
+# Visualization
+visualization:
+  figsize: [12, 8]
+  dpi: 300
+  interactive: false
+  output_dir: "./visualizations"
+
+# Reporting
+reporting:
+  output_dir: "./reports"
+  format: "html"  # Options: html, pdf, json
+  include_visualizations: true
+
+# Logging
+logging:
+  level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
+  file: "./logs/graphplag.log"
+  console: true
+
+# Performance
+performance:
+  use_cuda: true
+  num_workers: 4
+  cache_embeddings: true
+  batch_processing: true
