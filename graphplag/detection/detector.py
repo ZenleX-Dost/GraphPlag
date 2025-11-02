@@ -52,7 +52,7 @@ class PlagiarismDetector:
         # Initialize similarity computers
         if method in ['kernel', 'ensemble']:
             self.kernel_similarity = GraphKernelSimilarity(
-                kernel_types=kernel_types or ['wl', 'rw', 'sp']
+                kernel_types=kernel_types or ['wl']  # Using only WL kernel for stability
             )
         else:
             self.kernel_similarity = None

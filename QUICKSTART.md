@@ -50,6 +50,84 @@ python -m spacy download de_core_news_sm  # German
 pip install -e .
 ```
 
+## Usage Options
+
+GraphPlag offers three ways to use the system:
+
+1. **Web Interface** (Recommended for beginners) - Interactive browser-based UI
+2. **Command Line Interface** - Terminal-based for automation and scripts
+3. **Python API** - For integration into your own projects
+
+---
+
+## 🌐 Web Interface (Interactive)
+
+The easiest way to use GraphPlag is through the web interface.
+
+### Launch the Web App
+
+```bash
+python app.py
+```
+
+Then open your browser to: **http://localhost:7860**
+
+### Features
+
+- 📝 **Compare Two Documents** - Side-by-side comparison with real-time results
+- 📚 **Batch Compare** - Analyze multiple documents at once
+- 📊 **Interactive Visualizations** - Similarity gauges and heatmaps
+- 💾 **Export Reports** - Save results as HTML, JSON, or text
+
+### Web Interface Demo
+
+![Web Interface](docs/images/web-interface.png)
+
+---
+
+## 💻 Command Line Interface
+
+For automation and batch processing, use the CLI.
+
+### Compare Two Documents
+
+```bash
+# Compare two files
+python cli.py compare --file1 doc1.txt --file2 doc2.txt
+
+# Compare text directly
+python cli.py compare --text1 "First document" --text2 "Second document"
+
+# With custom settings
+python cli.py compare --file1 doc1.txt --file2 doc2.txt --method ensemble --threshold 0.8
+
+# Save report
+python cli.py compare --file1 doc1.txt --file2 doc2.txt --output report.html
+```
+
+### Batch Compare Multiple Documents
+
+```bash
+# Compare all files in a directory
+python cli.py batch --directory ./documents
+
+# Compare specific files
+python cli.py batch --files doc1.txt doc2.txt doc3.txt --output results.json
+```
+
+### CLI Options
+
+- `--method`: Detection method (`kernel`, `gnn`, `ensemble`)
+- `--threshold`: Plagiarism threshold (0.0 to 1.0, default: 0.7)
+- `--language`: Document language (`en`, `es`, `fr`, `de`)
+- `--output`: Save report to file
+
+---
+
+## 🐍 Python API
+
+For programmatic use, import GraphPlag in your Python code.
+
 ## Basic Usage
 
 ### Example 1: Simple Plagiarism Detection

@@ -44,7 +44,9 @@ class GraphKernelSimilarity:
             normalize: Whether to normalize kernel values
             wl_iterations: Number of iterations for WL kernel
         """
-        self.kernel_types = kernel_types or ['wl', 'rw', 'sp']
+        # Note: 'rw' (Random Walk) has compatibility issues with scipy 1.15+
+        # Using only WL and SP kernels which are stable
+        self.kernel_types = kernel_types or ['wl', 'sp']
         self.normalize = normalize
         self.wl_iterations = wl_iterations
         
@@ -64,8 +66,7 @@ class GraphKernelSimilarity:
         
         if 'rw' in self.kernel_types:
             kernels['rw'] = RandomWalk(
-                normalize=self.normalize,
-                lambda_decay=0.1
+                normalize=self.normalize
             )
         
         if 'sp' in self.kernel_types:
@@ -253,25 +254,40 @@ class GraphKernelSimilarity:
         grakel_graphs = []
         
         for G in nx_graphs:
-            # Create node labels (use node IDs as labels)
-            node_labels = {node: node for node in G.nodes()}
+            # GraKeL needs nodes numbered from 0
+            node_mapping = {node: idx for idx, node in enumerate(sorted(G.nodes()))}
             
-            # Create edge list
-            edges = list(G.edges())
+            # Create node labels (use indices)
+            node_labels = {node_mapping[node]: node_mapping[node] for node in G.nodes()}
             
-            # Create edge labels/weights
+            # Create edge list with remapped indices
+            edges = [(node_mapping[u], node_mapping[v]) for u, v in G.edges()]
+            
+            # If graph has no edges, create a single-node graph
+            if not edges and len(G.nodes()) > 0:
+                # For isolated nodes, GraKeL expects at least the node mapping
+                edges = []
+            
+            # Create edge labels/weights (optional)
             edge_labels = {}
-            for u, v in edges:
+            for u, v in G.edges():
                 edge_data = G.get_edge_data(u, v)
                 weight = edge_data.get('weight', 1.0) if edge_data else 1.0
-                edge_labels[(u, v)] = weight
+                edge_labels[(node_mapping[u], node_mapping[v])] = weight
             
-            # Create GraKeL graph
-            grakel_graph = GrakelGraph(
-                edges,
-                node_labels=node_labels,
-                edge_labels=edge_labels
-            )
+            # Create GraKeL graph - use simpler initialization
+            if edges:
+                grakel_graph = GrakelGraph(
+                    edges,
+                    node_labels=node_labels
+                )
+            else:
+                # For graphs without edges, use adjacency matrix
+                import numpy as np
+                n = len(G.nodes())
+                adj_matrix = np.zeros((n, n))
+                grakel_graph = GrakelGraph(adj_matrix, node_labels=node_labels)
+            
             grakel_graphs.append(grakel_graph)
         
         return grakel_graphs
