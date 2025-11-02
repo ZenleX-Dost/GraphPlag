@@ -42,7 +42,7 @@ data/raw/
 data/processed/
 *.csv
 *.json
-*.txt
+
 
 # Models
 models/
