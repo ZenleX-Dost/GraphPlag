@@ -4,6 +4,7 @@ nixPkgs = ["python310", "pip"]
 [phases.install]
 cmds = [
   "pip install --upgrade pip",
+  "pip install 'numpy<2.0.0'",
   "pip install -r requirements.txt",
   "pip install -r requirements-api.txt"
 ]

@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements
 COPY requirements.txt .
 
+# Install NumPy 1.x first (GraKeL compatibility)
+RUN pip install --no-cache-dir "numpy<2.0.0"
+
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -28,7 +31,7 @@ RUN pip install --no-cache-dir \
 COPY . .
 
 # Apply GraKeL patches
-RUN python patch_grakel.py
+RUN python patch_grakel.py || echo "Warning: GraKeL patching skipped"
 
 # Create cache directory
 RUN mkdir -p .cache/embeddings .cache/sentences
