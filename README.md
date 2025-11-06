@@ -2,7 +2,6 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/ZenleX-Dost/GraphPlag)
 
 GraphPlag is an advanced plagiarism detection system that uses semantic graph representations rather than traditional lexical matching. Documents are transformed into syntactic dependency graphs where sentences become nodes and their relationships become edges. The system leverages Graph Kernels and Graph Neural Networks (GNNs) to compute semantic similarity scores between documents.
 
@@ -24,7 +23,6 @@ Moves beyond surface-level text comparison to capture deep semantic relationship
 - 📊 **Large File Support**: Handles 50MB+ documents with intelligent chunking
 - 🌐 **REST API**: FastAPI with authentication, async batch processing
 - 📄 **Professional Reports**: PDF and Excel exports with color-coded highlighting
-- 🐳 **Easy Deployment**: Docker and Railway.app ready
 
 ## Installation
 
@@ -108,24 +106,10 @@ curl -X POST "http://localhost:8000/compare/text" \
   -d '{"text1":"test","text2":"test","method":"kernel","threshold":0.7}'
 ```
 
-## ☁️ Deploy to Railway
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/ZenleX-Dost/GraphPlag)
-
-**Quick Deploy:**
-1. Click the button above or go to [railway.app](https://railway.app)
-2. Select "Deploy from GitHub repo"
-3. Choose GraphPlag repository
-4. Railway automatically detects configuration
-5. Get your public API URL in minutes!
-
-**For detailed instructions, see [RAILWAY_DEPLOY.md](RAILWAY_DEPLOY.md)**
-
 ## 📚 Documentation
 
+- **[Setup Guide](SETUP.md)** - Complete local setup instructions
 - **[Features Summary](FEATURES_SUMMARY.md)** - Complete overview of all features
-- **[Railway Deployment](RAILWAY_DEPLOY.md)** - Deploy to Railway.app guide
-- **[Docker Deployment](DEPLOYMENT.md)** - Docker and production deployment
 - **[API Documentation](http://localhost:8000/docs)** - Interactive API docs (when server is running)
 
 ## Architecture
@@ -154,9 +138,7 @@ graphplag/
 ├── configs/          # Configuration files
 ├── experiments/      # Training and evaluation scripts
 ├── api.py            # FastAPI REST API
-├── cli.py            # Command-line interface
-├── Dockerfile        # Docker configuration
-└── railway.json      # Railway deployment config
+└── cli.py            # Command-line interface
 ```
 
 ## 🛠️ Technology Stack
@@ -166,7 +148,6 @@ graphplag/
 - **Deep Learning**: PyTorch
 - **API Framework**: FastAPI, Uvicorn
 - **Report Generation**: ReportLab (PDF), OpenPyXL (Excel)
-- **Deployment**: Docker, Railway.app
 - **Visualization**: Matplotlib, Plotly, PyVis
 
 ## 📊 Performance Metrics
