@@ -1,5 +1,5 @@
-# Railway-specific requirements
-# Includes all dependencies needed for deployment
+# Railway-specific minimal requirements
+# Optimized for deployment (excludes dev tools, visualization libs)
 
 # Pin NumPy to 1.x for GraKeL compatibility
 numpy>=1.21.0,<2.0.0
@@ -7,32 +7,26 @@ numpy>=1.21.0,<2.0.0
 # Core dependencies
 scipy>=1.7.0
 
-# NLP Processing
+# NLP Processing (minimal set)
 spacy>=3.5.0
-stanza>=1.5.0
-transformers>=4.30.0
 sentence-transformers>=2.2.0
-torch>=2.0.0
+transformers>=4.30.0
 langdetect>=1.0.9
+
+# PyTorch (CPU-only to save space)
+--index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
 
 # Graph Processing
 networkx>=3.0
-torch-geometric>=2.3.0
 grakel>=0.1.9
 
 # Machine Learning
 scikit-learn>=1.0.0
 
-# Visualization
-matplotlib>=3.5.0
-plotly>=5.0.0
-pyvis>=0.3.0
-seaborn>=0.12.0
-
-# Utilities
+# Utilities (minimal)
 pyyaml>=6.0
 tqdm>=4.64.0
-pandas>=1.5.0
 
 # File Parsing
 PyPDF2>=3.0.0
@@ -45,10 +39,17 @@ uvicorn[standard]>=0.27.0
 python-multipart>=0.0.6
 reportlab>=4.0.8
 openpyxl>=3.1.2
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
 python-dotenv>=1.0.0
 
-# Development tools (optional, can be removed for smaller build)
-pytest>=7.0.0
+# Minimal utilities
 psutil>=5.9.0
+
+# EXCLUDED for size optimization:
+# - stanza (large NLP models)
+# - torch-geometric (not needed for API)
+# - wandb, tensorboard (experiment tracking)
+# - gradio (UI framework)
+# - matplotlib, plotly, seaborn, pyvis (visualization)
+# - pandas (not essential for API)
+# - pytest, black, flake8, mypy (dev tools)
+

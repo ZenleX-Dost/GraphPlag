@@ -1,0 +1,111 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+venv_test/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+test_*.py
+tests/
+*_test.py
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Development files
+experiments/
+notebooks/
+*.ipynb
+
+# Data files
+data/
+datasets/
+*.csv
+*.json
+!.env.example
+
+# Cache and logs
+.cache/
+*.log
+logs/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+.dockerignore
+docker-compose.yml
+
+# Railway
+railway.json
+railway.toml
+nixpacks.toml
+
+# Large model files
+models/
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.pkl
+*.pickle
+
+# Deployment scripts
+deploy.sh
+deploy.bat
+fix_numpy.sh
+fix_numpy.bat
+
+# Gradio/demo files
+gradio_interface.py
+demo.py
+
+# Visualization outputs
+*.png
+*.jpg
+*.svg
+*.pdf
+*.html
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Development tools
+Makefile
+setup.py
+pyproject.toml
+poetry.lock
+Pipfile
+Pipfile.lock
+
+# Large dependencies not needed for API
+wandb/
+tensorboard/
