@@ -304,15 +304,79 @@ class GNNSimilarity:
     
     def _prepare_graph(self, graph: DocumentGraph) -> Data:
         """Prepare graph for GNN processing."""
+        import torch
+        import networkx as nx
+        
+        # Check if already PyG Data object
         if isinstance(graph.graph_data, Data):
             return graph.graph_data
-        else:
-            # Convert from NetworkX if needed
-            from graphplag.core.graph_builder import GraphBuilder
-            builder = GraphBuilder()
-            # This assumes the graph builder can convert NetworkX to PyG
-            # In practice, we'd need to ensure graph_data is in PyG format
-            return graph.graph_data
+        
+        # Convert from NetworkX or GraKeL to PyG format
+        try:
+            # Try to get the NetworkX graph
+            if hasattr(graph.graph_data, 'graph_'):
+                # It's a GraKeL Graph object - get the underlying NetworkX
+                nx_graph = graph.graph_data.graph_
+            elif isinstance(graph.graph_data, nx.Graph):
+                nx_graph = graph.graph_data
+            else:
+                # Fallback: reconstruct from nodes and edges
+                nx_graph = nx.Graph()
+                for node in graph.nodes:
+                    nx_graph.add_node(node.node_id, features=node.features)
+                for edge in graph.edges:
+                    nx_graph.add_edge(edge.source, edge.target, weight=edge.weight)
+            
+            # Convert NetworkX to PyG Data
+            nodes = sorted(nx_graph.nodes())
+            node_mapping = {node: idx for idx, node in enumerate(nodes)}
+            
+            # Extract node features
+            node_features = []
+            for node in nodes:
+                if 'features' in nx_graph.nodes[node]:
+                    features = nx_graph.nodes[node]['features']
+                else:
+                    # Use node features from DocumentGraph
+                    node_obj = next((n for n in graph.nodes if n.node_id == node), None)
+                    features = node_obj.features if node_obj else np.zeros(768)
+                node_features.append(features)
+            
+            x = torch.tensor(np.array(node_features), dtype=torch.float)
+            
+            # Extract edges
+            edge_list = []
+            for edge in nx_graph.edges():
+                src_idx = node_mapping[edge[0]]
+                tgt_idx = node_mapping[edge[1]]
+                edge_list.append([src_idx, tgt_idx])
+                edge_list.append([tgt_idx, src_idx])  # Add reverse edge for undirected
+            
+            if edge_list:
+                edge_index = torch.tensor(edge_list, dtype=torch.long).t()
+            else:
+                # No edges - create empty edge index
+                edge_index = torch.zeros((2, 0), dtype=torch.long)
+            
+            return Data(x=x, edge_index=edge_index)
+            
+        except Exception as e:
+            # If all else fails, create a simple graph from the document nodes
+            node_features = np.array([node.features for node in graph.nodes])
+            x = torch.tensor(node_features, dtype=torch.float)
+            
+            # Create sequential edges
+            edge_list = []
+            for i in range(len(graph.nodes) - 1):
+                edge_list.append([i, i + 1])
+                edge_list.append([i + 1, i])
+            
+            if edge_list:
+                edge_index = torch.tensor(edge_list, dtype=torch.long).t()
+            else:
+                edge_index = torch.zeros((2, 0), dtype=torch.long)
+            
+            return Data(x=x, edge_index=edge_index)
     
     def _load_model(self, model_path: str) -> SiameseGNN:
         """Load model from checkpoint."""

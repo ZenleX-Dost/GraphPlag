@@ -108,9 +108,15 @@ curl -X POST "http://localhost:8000/compare/text" \
 
 ## 📚 Documentation
 
-- **[Setup Guide](SETUP.md)** - Complete local setup instructions
-- **[Features Summary](FEATURES_SUMMARY.md)** - Complete overview of all features
-- **[API Documentation](http://localhost:8000/docs)** - Interactive API docs (when server is running)
+📖 **[Complete Documentation](DOCUMENTATION.md)** - Everything you need to know
+
+Quick links:
+- Installation & Setup
+- Running the Application  
+- Features & Usage Examples
+- API Reference
+- Troubleshooting
+- Configuration
 
 ## Architecture
 
