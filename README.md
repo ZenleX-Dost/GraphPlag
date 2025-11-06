@@ -28,21 +28,39 @@ Moves beyond surface-level text comparison to capture deep semantic relationship
 
 ## Installation
 
+### 🚀 One-Click Setup (Recommended)
+
+**Windows:**
+```batch
+setup_local.bat
+```
+
+**Linux/Mac:**
+```bash
+chmod +x setup_local.sh
+./setup_local.sh
+```
+
+This automatically installs **all features** with proper NumPy compatibility!
+
+### 📋 Manual Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/ZenleX-Dost/GraphPlag.git
 cd GraphPlag
 
-# Install dependencies
-pip install -r requirements.txt
+# Create virtual environment
+python -m venv venv
+.\venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
 
-# Download spaCy language models
-python -m spacy download en_core_web_sm
-python -m spacy download en_core_web_trf  # For better accuracy
-
-# Install in development mode
-pip install -e .
+# Run setup script
+.\setup_local.bat  # Windows
+# ./setup_local.sh  # Linux/Mac
 ```
+
+**For detailed setup instructions, see [SETUP.md](SETUP.md)**
 
 ## Quick Start
 
