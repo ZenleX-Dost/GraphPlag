@@ -17,6 +17,7 @@ from graphplag.core.models import (
     GraphEdge,
     Sentence
 )
+from graphplag.utils.cache import EmbeddingCache, SentenceSplitterCache
 
 
 class GraphBuilder:
@@ -32,7 +33,9 @@ class GraphBuilder:
         self,
         embedding_model: str = "paraphrase-multilingual-mpnet-base-v2",
         edge_strategy: str = "sequential",
-        max_edge_distance: int = 3
+        max_edge_distance: int = 3,
+        use_cache: bool = True,
+        cache_dir: str = ".cache"
     ):
         """
         Initialize the GraphBuilder.
@@ -41,10 +44,23 @@ class GraphBuilder:
             embedding_model: Name of sentence transformer model
             edge_strategy: Strategy for creating edges ('sequential', 'dependency', 'hybrid')
             max_edge_distance: Maximum distance for sequential edges
+            use_cache: Whether to use embedding cache
+            cache_dir: Directory for cache storage
         """
         self.embedding_model_name = embedding_model
         self.edge_strategy = edge_strategy
         self.max_edge_distance = max_edge_distance
+        self.use_cache = use_cache
+        
+        # Initialize cache
+        if use_cache:
+            self.embedding_cache = EmbeddingCache(
+                cache_dir=f"{cache_dir}/embeddings",
+                max_age_days=30,
+                max_size_mb=500
+            )
+        else:
+            self.embedding_cache = None
         
         # Load sentence transformer model
         print(f"Loading embedding model: {embedding_model}")
@@ -65,13 +81,9 @@ class GraphBuilder:
         Returns:
             DocumentGraph object
         """
-        # Generate sentence embeddings
+        # Generate sentence embeddings with caching
         sentence_texts = [sent.text for sent in document.sentences]
-        embeddings = self.encoder.encode(
-            sentence_texts,
-            convert_to_numpy=True,
-            show_progress_bar=False
-        )
+        embeddings = self._get_embeddings(sentence_texts)
         
         # Store embeddings in sentences
         for sent, emb in zip(document.sentences, embeddings):
@@ -114,6 +126,55 @@ class GraphBuilder:
         )
         
         return doc_graph
+    
+    def _get_embeddings(self, texts: List[str]) -> np.ndarray:
+        """
+        Get embeddings with caching support.
+        
+        Args:
+            texts: List of text strings
+            
+        Returns:
+            Array of embeddings
+        """
+        embeddings = []
+        texts_to_encode = []
+        indices_to_encode = []
+        
+        for idx, text in enumerate(texts):
+            if self.use_cache and self.embedding_cache:
+                # Try to get from cache
+                cached_emb = self.embedding_cache.get(text, self.embedding_model_name)
+                if cached_emb is not None:
+                    embeddings.append(cached_emb)
+                else:
+                    # Need to compute this embedding
+                    embeddings.append(None)
+                    texts_to_encode.append(text)
+                    indices_to_encode.append(idx)
+            else:
+                # No caching, need to compute all
+                embeddings.append(None)
+                texts_to_encode.append(text)
+                indices_to_encode.append(idx)
+        
+        # Compute missing embeddings in batch
+        if texts_to_encode:
+            new_embeddings = self.encoder.encode(
+                texts_to_encode,
+                convert_to_numpy=True,
+                show_progress_bar=len(texts_to_encode) > 10
+            )
+            
+            # Store newly computed embeddings
+            for idx, text, emb in zip(indices_to_encode, texts_to_encode, new_embeddings):
+                embeddings[idx] = emb
+                
+                # Cache the embedding
+                if self.use_cache and self.embedding_cache:
+                    self.embedding_cache.put(text, self.embedding_model_name, emb)
+        
+        return np.array(embeddings)
     
     def _create_edges(
         self,
@@ -354,5 +415,23 @@ class GraphBuilder:
         """
         return [self.build_graph(doc, graph_type) for doc in documents]
     
+    def get_cache_stats(self) -> Optional[Dict[str, Any]]:
+        """
+        Get cache statistics.
+        
+        Returns:
+            Cache statistics dict or None if cache is disabled
+        """
+        if self.use_cache and self.embedding_cache:
+            return self.embedding_cache.get_stats()
+        return None
+    
+    def clear_cache(self):
+        """Clear the embedding cache."""
+        if self.use_cache and self.embedding_cache:
+            self.embedding_cache.clear()
+            print("Embedding cache cleared")
+    
     def __repr__(self) -> str:
-        return f"GraphBuilder(model='{self.embedding_model_name}', strategy='{self.edge_strategy}')"
+        cache_status = "enabled" if self.use_cache else "disabled"
+        return f"GraphBuilder(model='{self.embedding_model_name}', strategy='{self.edge_strategy}', cache={cache_status})"

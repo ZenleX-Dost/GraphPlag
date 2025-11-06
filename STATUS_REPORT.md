@@ -76,13 +76,17 @@ Results:
 **Issue:** NumPy 2.2.6 incompatible with GraKeL  
 **Resolution:** Downgraded to numpy 1.26.4
 
-### 2. Random Walk Kernel Compatibility ✓ RESOLVED
+### 2. Random Walk Kernel Compatibility ✓ FULLY FIXED
 **Issue:** RandomWalk kernel incompatible with scipy 1.15+  
-**Resolution:** Removed 'rw' kernel from defaults, using only 'wl' (Weisfeiler-Lehman)
+**Root Cause:** scipy.cg() API changed from `tol=` to `rtol=` parameter  
+**Resolution:** Patched GraKeL library to use new scipy API (rtol instead of tol)  
+**Status:** All tests passing, kernel fully functional
 
-### 3. Shortest Path Kernel NaN Issue ✓ RESOLVED
+### 3. Shortest Path Kernel NaN Issue ✓ FULLY FIXED
 **Issue:** Shortest Path kernel producing NaN values  
-**Resolution:** Removed 'sp' kernel from defaults
+**Root Cause:** Division by zero in normalization with zero diagonal values  
+**Resolution:** Added zero-check before normalization in GraKeL base kernel class  
+**Status:** All tests passing, no NaN values detected
 
 ### 4. Sentence Transformers Warnings ⚠️ MINOR
 **Issue:** HuggingFace symlinks warning on Windows  

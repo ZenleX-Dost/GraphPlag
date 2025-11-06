@@ -44,9 +44,11 @@ class GraphKernelSimilarity:
             normalize: Whether to normalize kernel values
             wl_iterations: Number of iterations for WL kernel
         """
-        # Note: 'rw' (Random Walk) has compatibility issues with scipy 1.15+
-        # Using only WL and SP kernels which are stable
-        self.kernel_types = kernel_types or ['wl', 'sp']
+        # All three kernels are now enabled after patching GraKeL library:
+        # - 'wl' (Weisfeiler-Lehman): Fast and effective for general graphs
+        # - 'rw' (Random Walk): Fixed scipy 1.15+ compatibility (tol -> rtol)
+        # - 'sp' (Shortest Path): Fixed NaN issues in normalization
+        self.kernel_types = kernel_types or ['wl', 'rw', 'sp']
         self.normalize = normalize
         self.wl_iterations = wl_iterations
         
