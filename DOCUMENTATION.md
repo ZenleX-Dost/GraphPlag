@@ -123,6 +123,23 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt
 - **Paraphrase Detection**: Detects heavily modified text
 - **Cross-lingual**: Compare documents in different languages
 
+### 🤖 AI-Generated Content Detection (NEW)
+- **Multiple Detection Methods**:
+  - Neural-based detection (fine-tuned classifier)
+  - Statistical analysis (word frequency, sentence patterns)
+  - Linguistic markers (phrase patterns, vocabulary diversity)
+  - Ensemble voting for robust detection
+- **AI Confidence Score**: 0-100% confidence that text is AI-generated
+- **Integrated Analysis**: Combined plagiarism + AI detection
+- **Risk Assessment**: Comprehensive integrity scoring
+- **Reports**: Automatic recommendations based on findings
+
+**Detection Capabilities:**
+- ✅ ChatGPT, Claude, Gemini, and other LLM outputs
+- ✅ Distinguishes AI vs. human writing patterns
+- ✅ Works with paraphrased AI content
+- ✅ Supports batch analysis of multiple documents
+
 ### Performance
 - ⚡ **8x faster** with disk-based caching
 - 📊 **50MB+ files** supported with intelligent chunking
@@ -145,7 +162,7 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt
 
 ### Interfaces
 1. **Web UI** (Gradio): User-friendly, no coding required
-2. **Enhanced Web UI**: Advanced visualizations
+2. **Enhanced Web UI**: Advanced visualizations + AI detection
 3. **REST API**: FastAPI with Swagger docs
 4. **CLI**: Command-line for automation
 5. **Python API**: Direct import in scripts
@@ -157,15 +174,54 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt
 ### 1. Web Interface (Easiest)
 
 ```powershell
-.\start_web.bat
+.\run.bat
 ```
+
+Choose option [3] for Web or [4] for Enhanced Web Interface
 
 1. Upload two documents or paste text
 2. Click "Compare"
-3. View results with visual graphs
+3. View results with visual graphs and AI detection analysis
 4. Download PDF/Excel report
 
-### 2. Command Line Interface
+### 2. AI Detection Only
+
+```python
+from graphplag.detection.ai_detector import AIDetector
+
+detector = AIDetector()
+
+# Detect if text is AI-generated
+text = "Your text here..."
+result = detector.detect_ai_content(text, method="ensemble")
+
+print(f"Is AI-generated: {result['is_ai']}")
+print(f"Confidence: {result['confidence']:.2%}")
+print(f"Scores: {result['scores']}")
+```
+
+### 3. Integrated Plagiarism + AI Detection
+
+```python
+from graphplag.detection.integrated_detector import IntegratedDetector
+
+detector = IntegratedDetector()
+
+# Comprehensive analysis
+results = detector.analyze(doc1, doc2)
+
+print(f"Plagiarism Score: {results['plagiarism_results']['similarity_score']:.2%}")
+print(f"Doc1 AI Score: {results['ai_results']['document_1']['confidence']:.2%}")
+print(f"Doc2 AI Score: {results['ai_results']['document_2']['confidence']:.2%}")
+print(f"Overall Risk Level: {results['risk_assessment']['overall_risk_level']}")
+print(f"Recommendations: {results['recommendations']}")
+
+# Generate formatted report
+text_report = detector.generate_report(doc1, doc2, output_format="text")
+html_report = detector.generate_report(doc1, doc2, output_format="html")
+```
+
+### 4. Command Line Interface
 
 ```bash
 # Basic comparison
@@ -181,7 +237,7 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt --output report.xlsx
 python cli.py compare --file1 doc1.txt --file2 doc2.txt --method kernel --threshold 0.7
 ```
 
-### 3. Python API
+### 5. Python API
 
 ```python
 from graphplag.detection.detector import PlagiarismDetector
@@ -220,7 +276,7 @@ excel_gen = ExcelReportGenerator()
 excel_gen.generate_report(result, "report.xlsx")
 ```
 
-### 4. REST API
+### 6. REST API
 
 **Start API:**
 ```bash
@@ -240,6 +296,157 @@ curl -X POST "http://localhost:8000/compare/text" \
     "method": "kernel",
     "threshold": 0.7
   }'
+```
+
+## 🤖 AI Detection Guide
+
+### Overview
+
+GraphPlag can detect AI-generated text using multiple methods:
+
+1. **Neural Detection**: Fine-tuned deep learning model
+2. **Statistical Analysis**: Word frequency, sentence patterns, repetition
+3. **Linguistic Markers**: AI-specific phrases, vocabulary, sentence structure
+4. **Ensemble Method**: Combines all methods for robust detection
+
+### Detection Methods
+
+#### Method 1: Neural Detection
+
+```python
+from graphplag.detection.ai_detector import AIDetector
+
+detector = AIDetector()
+result = detector.detect_ai_content(text, method="neural")
+
+# Returns:
+# {
+#   "is_ai": bool,
+#   "confidence": 0.0-1.0,
+#   "scores": {"label": score},
+#   "details": {...}
+# }
+```
+
+**Pros**: Most accurate, handles complex patterns
+**Cons**: Requires GPU for speed, may fail on very short text
+
+#### Method 2: Statistical Detection
+
+```python
+result = detector.detect_ai_content(text, method="statistical")
+```
+
+**Analyzes:**
+- Word frequency distribution (AI has more uniform distribution)
+- Sentence length variance (AI has less variety)
+- Phrase repetition rate (AI repeats phrases more)
+- Vocabulary diversity (AI has lower diversity)
+
+**Pros**: Fast, works offline
+**Cons**: Can be fooled by intentionally varied writing
+
+#### Method 3: Linguistic Detection
+
+```python
+result = detector.detect_ai_content(text, method="linguistic")
+```
+
+**Checks for:**
+- Common AI phrases ("as an AI", "I appreciate")
+- Excessive transition words ("furthermore", "moreover")
+- Passive voice overuse
+- Formal vocabulary patterns
+
+**Pros**: Interpretable, catches obvious AI patterns
+**Cons**: Misses sophisticated AI writing
+
+#### Method 4: Ensemble Detection (Recommended)
+
+```python
+result = detector.detect_ai_content(text, method="ensemble")
+```
+
+**Combines** all methods with voting mechanism for most robust detection.
+
+### Integrated Analysis: Plagiarism + AI Detection
+
+```python
+from graphplag.detection.integrated_detector import IntegratedDetector
+
+detector = IntegratedDetector()
+
+# Comprehensive analysis
+results = detector.analyze(doc1, doc2)
+
+# Results include:
+# - Plagiarism score
+# - AI detection for both documents
+# - Risk assessment
+# - Recommendations
+
+risk = results["risk_assessment"]
+print(f"Risk Level: {risk['overall_risk_level']}")
+print(f"Risk Factors: {risk['risk_factors']}")
+
+for rec in results["recommendations"]:
+    print(f"- {rec}")
+```
+
+### Risk Levels
+
+| Level | Risk Score | Interpretation |
+|-------|-----------|-----------------|
+| CRITICAL | > 0.80 | Severe integrity issues, likely fabricated |
+| HIGH | 0.60-0.80 | Significant concerns, requires investigation |
+| MODERATE | 0.40-0.60 | Some concerns, manual review recommended |
+| LOW | 0.20-0.40 | Minor concerns, likely acceptable |
+| MINIMAL | < 0.20 | No significant concerns |
+
+### Risk Factors
+
+**Plagiarism-related:**
+- `CRITICAL_PLAGIARISM`: >90% similarity
+- `HIGH_PLAGIARISM`: >70% similarity
+- `MODERATE_PLAGIARISM`: >50% similarity
+
+**AI-related:**
+- `BOTH_DOCUMENTS_AI_GENERATED`: Both texts show AI patterns
+- `AT_LEAST_ONE_AI_GENERATED`: One document is likely AI
+- `AI_ASSISTED_PLAGIARISM_POSSIBLE`: High plagiarism + AI indicators
+
+### Batch Analysis Example
+
+```python
+documents = [
+    {"id": "essay1", "text": "..."},
+    {"id": "essay2", "text": "..."},
+    {"id": "essay3", "text": "..."}
+]
+
+detector = IntegratedDetector()
+
+# Analyze each document
+for doc in documents:
+    result = detector.analyze(doc["text"], "reference_text")
+    if result["risk_assessment"]["overall_risk_level"] in ["HIGH", "CRITICAL"]:
+        print(f"ALERT: {doc['id']} - {result['recommendations'][0]}")
+```
+
+### Generating Reports
+
+```python
+# Text report
+text_report = detector.generate_report(doc1, doc2, output_format="text")
+print(text_report)
+
+# JSON report
+json_report = detector.generate_report(doc1, doc2, output_format="json")
+
+# HTML report
+html_report = detector.generate_report(doc1, doc2, output_format="html")
+with open("report.html", "w") as f:
+    f.write(html_report)
 ```
 
 **Upload Files:**

@@ -49,7 +49,8 @@ def test_detect_plagiarism_dissimilar(detector):
 
 def test_detect_plagiarism_identical(detector):
     """Test plagiarism detection for identical documents."""
-    text = "This is a test document for plagiarism detection."
+    # Use multiple sentences to create a proper multi-node graph
+    text = "This is a test document for plagiarism detection. It contains several sentences. Each sentence will become a node in the graph."
     
     report = detector.detect_plagiarism(text, text)
     

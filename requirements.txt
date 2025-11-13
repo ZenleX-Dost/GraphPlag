@@ -9,6 +9,7 @@ transformers>=4.30.0
 sentence-transformers>=2.2.0
 torch>=2.0.0
 langdetect>=1.0.9
+tf-keras>=2.13.0  # Fix Keras 3 compatibility with transformers
 
 # Graph Processing
 networkx>=3.0

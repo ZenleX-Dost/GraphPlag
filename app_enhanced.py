@@ -15,11 +15,15 @@ from datetime import datetime
 
 from graphplag import PlagiarismDetector
 from graphplag.detection.report_generator import ReportGenerator
+from graphplag.detection.ai_detector import AIDetector
+from graphplag.detection.integrated_detector import IntegratedDetector
 from graphplag.utils.file_parser import FileParser
 
 
 # Global state
 detector = None
+ai_detector = None
+integrated_detector = None
 report_gen = ReportGenerator()
 file_parser = FileParser()
 comparison_history = []

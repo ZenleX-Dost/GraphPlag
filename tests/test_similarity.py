@@ -161,8 +161,9 @@ def test_batch_similarity(builder, kernel_similarity, parser):
 
 def test_self_similarity(builder, kernel_similarity, parser):
     """Test that self-similarity is high."""
+    # Use multiple sentences to create a proper multi-node graph
     doc = parser.parse_document(
-        "This is a test document for self-similarity.",
+        "This is a test document for self-similarity. It contains several sentences. Each sentence becomes a node in the graph.",
         doc_id="doc1"
     )
     

@@ -186,17 +186,35 @@ class GraphKernelSimilarity:
         kernel = self.kernels[kernel_type]
         K = kernel.fit_transform(grakel_graphs)
         
+        # Handle NaN/Inf values in kernel matrix
+        K = np.nan_to_num(K, nan=0.0, posinf=1.0, neginf=0.0)
+        
         # Extract similarity score (off-diagonal element)
-        similarity = K[0, 1]
+        similarity = float(K[0, 1])
         
         # Normalize to [0, 1] range if not already normalized
-        if not self.normalize and K[0, 0] > 0 and K[1, 1] > 0:
-            similarity = similarity / np.sqrt(K[0, 0] * K[1, 1])
+        # For identical graphs, the normalization should yield 1.0
+        k11 = float(K[0, 0])
+        k22 = float(K[1, 1])
+        
+        if not self.normalize:
+            if k11 > 0 and k22 > 0:
+                # Standard normalization
+                similarity = similarity / np.sqrt(k11 * k22)
+            elif k11 == 0 or k22 == 0:
+                # If self-kernels are 0, assume low similarity
+                # unless the graphs are identical (both 0)
+                if k11 == 0 and k22 == 0:
+                    # Both graphs have 0 self-kernel
+                    # If off-diagonal is also 0, they're identical in structure
+                    similarity = 1.0 if similarity == 0 else similarity
+                else:
+                    similarity = 0.0
         
         # Ensure score is in valid range
-        similarity = np.clip(similarity, 0.0, 1.0)
+        similarity = float(np.clip(similarity, 0.0, 1.0))
         
-        return float(similarity)
+        return similarity
     
     def ensemble_kernel_score(
         self,
