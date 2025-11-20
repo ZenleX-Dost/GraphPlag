@@ -529,6 +529,179 @@ def create_history_display() -> str:
     return html
 
 
+
+
+def analyze_ai_content(text_input: str, file_input, method: str) -> Tuple[str, go.Figure, go.Figure]:
+    """Analyze text for AI-generated content"""
+    
+    # Get document content
+    if file_input is not None:
+        text, _ = extract_text_from_file(file_input)
+        if text.startswith("Error"):
+            return text, None, None
+    else:
+        text = text_input
+    
+    if not text or len(text) < 10:
+        return "Please provide text to analyze (at least 10 characters)", None, None
+    
+    try:
+        # Initialize AI detector
+        global ai_detector
+        if ai_detector is None:
+            ai_detector = AIDetector()
+        
+        # Run AI detection
+        start_time = time.time()
+        result = ai_detector.detect_ai_content(text, method=method)
+        elapsed = time.time() - start_time
+        
+        is_ai = result.get('is_ai', False)
+        confidence = result.get('confidence', 0.0)
+        scores = result.get('scores', {})
+        
+        # Determine color based on confidence
+        if confidence >= 0.7:
+            color = "#dc3545"  # Red - likely AI
+            status = "⚠️ LIKELY AI-GENERATED"
+        elif confidence >= 0.5:
+            color = "#fd7e14"  # Orange - possibly AI
+            status = "⚠️ POSSIBLY AI-GENERATED"
+        else:
+            color = "#28a745"  # Green - likely human
+            status = "✅ LIKELY HUMAN-WRITTEN"
+        
+        # Build HTML result
+        result_html = f"""
+        <div style="padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="color: {color}; margin: 0 0 0.5rem 0; font-size: 1.8rem;">
+                    {status}
+                </h2>
+                <p style="color: #666; margin: 0; font-size: 1.1rem;">
+                    Confidence Score: <strong style="color: {color}; font-size: 1.3rem;">{confidence:.1%}</strong>
+                </p>
+                <p style="color: #999; margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                    Analysis Time: {elapsed:.2f}s
+                </p>
+            </div>
+            
+            <hr style="margin: 2rem 0; border: none; border-top: 2px solid #f0f0f0;">
+            
+            <h3 style="color: #667eea; margin-bottom: 1rem;">Analysis Breakdown</h3>
+            <div style="padding: 1.5rem; background: #f8f9fa; border-radius: 8px;">
+        """
+        
+        # Add individual scores
+        if scores:
+            result_html += "<div style='display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;'>"
+            for method_name, score in scores.items():
+                score_color = "#dc3545" if score >= 0.6 else "#28a745"
+                result_html += f"""
+                <div style="padding: 1rem; background: white; border-radius: 6px; border-left: 4px solid {score_color};">
+                    <strong style="display: block; margin-bottom: 0.5rem; text-transform: capitalize;">{method_name}</strong>
+                    <div style="font-size: 1.5rem; color: {score_color}; font-weight: bold;">
+                        {score:.1%}
+                    </div>
+                </div>
+                """
+            result_html += "</div>"
+        
+        result_html += """
+            </div>
+            
+            <div style="margin-top: 2rem; padding: 1rem; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #667eea;">
+                <strong style="color: #667eea;">Note:</strong>
+                <p style="color: #666; margin-top: 0.5rem;">
+                This analysis uses multiple methods to detect AI-generated content. The confidence score is based on:
+                <ul style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
+                    <li><strong>Statistical Analysis:</strong> Examines writing patterns and text statistics</li>
+                    <li><strong>Linguistic Features:</strong> Analyzes language structure and vocabulary patterns</li>
+                    <li><strong>Neural Detection:</strong> Uses deep learning models for pattern recognition</li>
+                </ul>
+                </p>
+            </div>
+        </div>
+        """
+        
+        # Create confidence gauge
+        gauge_fig = go.Figure(go.Indicator(
+            mode="gauge+number+delta",
+            value=confidence * 100,
+            domain={'x': [0, 1], 'y': [0, 1]},
+            title={'text': "AI Confidence", 'font': {'size': 24, 'color': '#667eea'}},
+            delta={'reference': 50, 'increasing': {'color': "#dc3545"}},
+            gauge={
+                'axis': {'range': [None, 100], 'tickcolor': "#667eea"},
+                'bar': {'color': color},
+                'steps': [
+                    {'range': [0, 33], 'color': "#e8f4f8"},
+                    {'range': [33, 67], 'color': "#fff3e0"},
+                    {'range': [67, 100], 'color': "#ffe8e8"}],
+                'threshold': {
+                    'line': {'color': "red", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 70}
+            },
+            number={'font': {'size': 40, 'color': color}},
+        ))
+        
+        gauge_fig.update_layout(
+            paper_bgcolor="white",
+            font={'color': "#333"},
+            height=400,
+            margin={'l': 20, 'r': 20, 't': 60, 'b': 20}
+        )
+        
+        # Create detailed analysis chart
+        if scores:
+            methods = list(scores.keys())
+            values = list(scores.values())
+            
+            details_fig = go.Figure()
+            
+            colors_list = ["#dc3545" if v >= 0.6 else "#28a745" for v in values]
+            
+            details_fig.add_trace(go.Bar(
+                y=methods,
+                x=[v * 100 for v in values],
+                orientation='h',
+                marker=dict(color=colors_list),
+                text=[f"{v:.1%}" for v in values],
+                textposition='auto',
+                hovertemplate='<b>%{y}</b><br>Score: %{x:.1f}%<extra></extra>'
+            ))
+            
+            details_fig.update_layout(
+                title="Detection Method Scores",
+                xaxis_title="Confidence (%)",
+                paper_bgcolor="white",
+                plot_bgcolor="#f8f9fa",
+                height=400,
+                showlegend=False,
+                hovermode='closest',
+                margin={'l': 150, 'r': 20, 't': 60, 'b': 20}
+            )
+        else:
+            details_fig = None
+        
+        return result_html, gauge_fig, details_fig
+        
+    except Exception as e:
+        error_html = f"""
+        <div style="padding: 2rem; background: #ffe8e8; border-radius: 12px; border-left: 4px solid #dc3545;">
+            <h3 style="color: #dc3545; margin: 0 0 1rem 0;">Analysis Error</h3>
+            <p style="color: #666; margin: 0;">
+                An error occurred while analyzing the text:
+            </p>
+            <p style="color: #dc3545; margin: 1rem 0 0 0; font-family: monospace;">
+                {str(e)}
+            </p>
+        </div>
+        """
+        return error_html, None, None
+
+
 def load_example(example_name: str) -> Tuple[str, str]:
     """Load example documents"""
     examples = {
@@ -766,7 +939,75 @@ with gr.Blocks(
             with gr.Row():
                 batch_plot_output = gr.Plot(label="Similarity Matrix")
         
-        # Tab 3: About & Help
+        # Tab 3: AI Detection
+        with gr.Tab(" Detect AI-Generated Content"):
+            gr.Markdown("""
+            ### Detect if text was written by AI
+            Analyze documents to determine if they were AI-generated using advanced statistical and linguistic methods.
+            """)
+            
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("#### Text to Analyze")
+                    ai_text_file = gr.File(
+                        label="Upload File",
+                        file_types=[".pdf", ".docx", ".txt", ".md", ".markdown"],
+                        file_count="single"
+                    )
+                    ai_text_input = gr.Textbox(
+                        label="Or Paste Text",
+                        placeholder="Enter text to analyze for AI generation...",
+                        lines=15,
+                        max_lines=25
+                    )
+                
+                with gr.Column():
+                    gr.Markdown("#### Settings")
+                    ai_method = gr.Dropdown(
+                        choices=["ensemble", "neural", "statistical", "linguistic"],
+                        value="ensemble",
+                        label="Detection Method",
+                        info="Ensemble: Most accurate | Neural: Deep learning based | Statistical: Pattern analysis | Linguistic: Language features"
+                    )
+                    
+                    gr.Markdown("#### Analysis Preview")
+                    ai_stats = gr.HTML(label="Text Statistics")
+            
+            ai_analyze_btn = gr.Button(
+                "Analyze for AI Content",
+                variant="primary",
+                size="lg",
+                elem_classes="primary-button"
+            )
+            
+            # AI Detection Results
+            with gr.Row():
+                ai_result_output = gr.HTML(label="AI Detection Results")
+            
+            with gr.Row():
+                ai_gauge_plot = gr.Plot(label="AI Confidence Gauge")
+                ai_details_plot = gr.Plot(label="Detailed Analysis")
+            
+            # Event handlers for AI tab
+            ai_text_input.change(
+                fn=update_text_stats,
+                inputs=[ai_text_input],
+                outputs=[ai_stats]
+            )
+            
+            ai_text_file.change(
+                fn=extract_text_from_file,
+                inputs=[ai_text_file],
+                outputs=[ai_text_input, ai_stats]
+            )
+            
+            ai_analyze_btn.click(
+                fn=analyze_ai_content,
+                inputs=[ai_text_input, ai_text_file, ai_method],
+                outputs=[ai_result_output, ai_gauge_plot, ai_details_plot]
+            )
+        
+        # Tab 4: About & Help
         with gr.Tab("ℹAbout & Help"):
             gr.Markdown("""
             ## How to Use GraphPlag

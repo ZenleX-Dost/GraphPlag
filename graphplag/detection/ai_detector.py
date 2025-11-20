@@ -101,14 +101,32 @@ class AIDetector:
             neural_result = self._neural_detect(text)
             scores['neural'] = neural_result['confidence']
         
-        # Ensemble voting
+        # Weighted ensemble voting
+        # Give higher weight to linguistic and statistical
+        # Lower weight to neural (if it's not working well)
         if scores:
-            ensemble_score = np.mean(list(scores.values()))
+            weights = {
+                'linguistic': 0.5,      # STRONGEST - explicit AI markers
+                'statistical': 0.4,     # STRONG - patterns and structure
+                'neural': 0.1          # WEAK - neural model performs poorly
+            }
+            
+            weighted_sum = 0.0
+            total_weight = 0.0
+            
+            for method, score in scores.items():
+                weight = weights.get(method, 0.33)
+                weighted_sum += score * weight
+                total_weight += weight
+            
+            ensemble_score = weighted_sum / total_weight if total_weight > 0 else 0.5
         else:
             ensemble_score = 0.5
         
-        # Threshold: >0.6 is likely AI
-        is_ai = ensemble_score > 0.6
+        # Lower threshold from 0.6 to 0.3 for better detection
+        # Rationale: We want to catch real AI content, false positives are acceptable
+        # Better to flag real AI content than to miss it
+        is_ai = ensemble_score > 0.30
         
         return {
             "is_ai": is_ai,
@@ -116,7 +134,8 @@ class AIDetector:
             "scores": scores,
             "details": {
                 "text_length": len(text),
-                "method": "ensemble"
+                "method": "ensemble",
+                "threshold": 0.45
             }
         }
     
@@ -172,9 +191,10 @@ class AIDetector:
     def _statistical_detect(self, text: str) -> Dict:
         """
         Detect AI patterns using statistical analysis:
-        - Word frequency patterns
-        - Sentence length variance
-        - Repetition rate
+        - Perplexity-like patterns
+        - Token distribution
+        - Sentence structure uniformity
+        - Common n-grams
         """
         words = text.lower().split()
         sentences = re.split(r'[.!?]+', text)
@@ -188,49 +208,99 @@ class AIDetector:
                 "details": {"error": "Insufficient text"}
             }
         
-        # 1. Word frequency analysis (AI tends to have more uniform distribution)
+        ai_indicators = []
+        
+        # 1. Vocabulary richness (AI often shows lower diversity)
         word_freq = Counter(words)
-        freq_values = list(word_freq.values())
-        avg_freq = np.mean(freq_values)
-        std_freq = np.std(freq_values)
+        unique_words = len(word_freq)
+        total_words = len(words)
+        type_token_ratio = unique_words / max(total_words, 1)
         
-        # AI text has lower variance in word frequency
-        # Normalize to 0-1 scale
-        freq_score = min(std_freq / 5.0, 1.0)  # Empirical threshold
+        # AI tends toward 0.40-0.65 TTR, humans vary more
+        # Penalize if in AI range
+        if 0.40 <= type_token_ratio <= 0.65:
+            ai_indicators.append(0.7)  # Likely AI range
+        elif type_token_ratio > 0.70:
+            ai_indicators.append(0.2)  # Too diverse for AI
+        else:
+            ai_indicators.append(0.5)  # Slightly repetitive
         
-        # 2. Sentence length variance (AI tends to have more uniform sentence lengths)
-        sent_lengths = [len(s.split()) for s in sentences]
-        avg_sent_len = np.mean(sent_lengths)
-        std_sent_len = np.std(sent_lengths)
+        # 2. Sentence length uniformity (AI is more uniform)
+        sent_lengths = [len(s.split()) for s in sentences if s.split()]
+        if len(sent_lengths) > 1:
+            avg_len = np.mean(sent_lengths)
+            std_len = np.std(sent_lengths)
+            coeff_var = (std_len / avg_len) if avg_len > 0 else 0.5
+            
+            # AI has lower variation (0.25-0.45), humans higher (0.5-1.5)
+            if coeff_var < 0.35:
+                ai_indicators.append(0.75)  # Very uniform = likely AI
+            elif coeff_var < 0.45:
+                ai_indicators.append(0.6)   # Fairly uniform
+            elif coeff_var > 0.9:
+                ai_indicators.append(0.1)  # Varied = human
+            else:
+                ai_indicators.append(0.3)  # Neutral
         
-        # AI has lower variance
-        length_score = min(std_sent_len / 8.0, 1.0)  # Empirical threshold
+        # 3. Common word patterns (AI uses more predictable patterns)
+        most_common = word_freq.most_common(25)
+        top_word_freq = sum(freq for _, freq in most_common) / total_words
         
-        # 3. Repetition rate (AI tends to repeat phrases)
-        bigrams = [' '.join(words[i:i+2]) for i in range(len(words)-1)]
-        bigram_freq = Counter(bigrams)
-        repetition_score = len([f for f in bigram_freq.values() if f > 2]) / max(len(bigrams), 1)
-        repetition_score = min(repetition_score, 1.0)
+        # If top 25 words make up >35% of text, might be AI
+        if top_word_freq > 0.38:
+            ai_indicators.append(0.7)
+        elif top_word_freq < 0.20:
+            ai_indicators.append(0.1)
+        else:
+            ai_indicators.append(0.4)
         
-        # 4. Vocabulary diversity (AI has lower diversity)
-        vocab_diversity = len(word_freq) / len(words)
-        diversity_score = max(1 - vocab_diversity, 0)  # AI has lower diversity
+        # 4. Bigram and trigram repetition (AI repeats phrases more)
+        bigrams = [' '.join(words[i:i+2]) for i in range(len(words)-2)] if len(words) > 2 else []
+        trigrams = [' '.join(words[i:i+3]) for i in range(len(words)-3)] if len(words) > 3 else []
         
-        # Combine scores
-        ai_score = (freq_score + repetition_score + diversity_score) / 3.0
+        if bigrams:
+            bigram_freq = Counter(bigrams)
+            # Count bigrams that appear 2+ times
+            repeated_bigrams = sum(1 for f in bigram_freq.values() if f >= 2)
+            bigram_score = min((repeated_bigrams * 1.5) / max(len(bigrams) / 5, 1), 1.0)
+            ai_indicators.append(bigram_score * 0.7)
+        
+        # 5. Punctuation frequency (AI uses certain patterns more)
+        punct_count = len(re.findall(r'[,;:\-—]', text))
+        avg_punct_per_sent = punct_count / len(sentences) if sentences else 0
+        
+        # AI averages 1.2-2.8 per sentence, humans vary more widely
+        if 1.0 <= avg_punct_per_sent <= 2.8:
+            ai_indicators.append(0.6)
+        elif avg_punct_per_sent > 3.0:
+            ai_indicators.append(0.7)  # Heavy punctuation = AI
+        else:
+            ai_indicators.append(0.2)
+        
+        # 6. Parentheses and dash usage (AI uses more)
+        paren_dash_count = len(re.findall(r'[()—\-]', text))
+        if paren_dash_count >= len(sentences) * 0.8:
+            ai_indicators.append(0.6)  # Heavy use suggests AI
+        else:
+            ai_indicators.append(0.2)
+        
+        # Calculate final score
+        ai_score = np.mean(ai_indicators) if ai_indicators else 0.5
         
         return {
-            "is_ai": ai_score > 0.6,
+            "is_ai": ai_score > 0.5,
             "confidence": float(ai_score),
             "scores": {
-                "word_frequency": float(freq_score),
-                "repetition": float(repetition_score),
-                "vocabulary_diversity": float(diversity_score)
+                "type_token_ratio": float(type_token_ratio),
+                "sentence_uniformity": float(1 - coeff_var) if len(sent_lengths) > 1 else 0.5,
+                "phrase_repetition": float(ai_indicators[3]) if len(ai_indicators) > 3 else 0.0,
+                "punctuation_patterns": float(ai_indicators[4]) if len(ai_indicators) > 4 else 0.0
             },
             "details": {
-                "vocab_size": len(word_freq),
-                "avg_sentence_length": float(avg_sent_len),
-                "sentence_length_variance": float(std_sent_len),
+                "vocab_size": unique_words,
+                "total_words": total_words,
+                "unique_ratio": float(type_token_ratio),
+                "avg_sentence_length": float(np.mean(sent_lengths)) if sent_lengths else 0,
                 "method": "statistical"
             }
         }
@@ -238,10 +308,10 @@ class AIDetector:
     def _linguistic_detect(self, text: str) -> Dict:
         """
         Detect AI patterns using linguistic markers:
-        - Phrase patterns
-        - Punctuation usage
+        - Formal vocabulary patterns
+        - Phrase structures
         - Transition words
-        - Active vs passive voice
+        - Academic language markers
         """
         words = text.lower().split()
         
@@ -253,53 +323,129 @@ class AIDetector:
                 "details": {"error": "Insufficient text"}
             }
         
-        # 1. Check for common AI phrases
-        ai_phrases = [
-            "as an ai", "as a language model", "i appreciate", "i understand",
-            "furthermore", "in conclusion", "it is important to note",
-            "let me explain", "in summary", "to put it simply"
-        ]
-        
         text_lower = text.lower()
-        ai_phrase_count = sum(text_lower.count(phrase) for phrase in ai_phrases)
-        phrase_score = min(ai_phrase_count / 3.0, 1.0)  # Normalize
+        ai_scores = []
         
-        # 2. Punctuation patterns (AI uses more varied punctuation)
-        punctuation_count = len(re.findall(r'[,;:\-()]', text))
-        punctuation_score = min(punctuation_count / (len(words) / 2), 1.0)
-        
-        # 3. Transition words (AI overuses them)
-        transitions = [
-            "however", "therefore", "moreover", "furthermore", "additionally",
-            "consequently", "ultimately", "notably", "specifically"
+        # 1. STRONG AI INDICATORS - Direct model phrases
+        strong_ai_phrases = [
+            "as an ai", "as a language model", "as an llm",
+            "i'm unable", "i cannot", "i don't have", "i cannot access",
+            "it's not possible for me", "i lack the ability",
+            "my training data", "language model",
+            "i appreciate your", "i understand you", "i can provide",
+            "i can help", "i can assist", "as an artificial intelligence",
         ]
-        transition_count = sum(text_lower.count(t) for t in transitions)
-        transition_score = min(transition_count / 2.0, 1.0)
         
-        # 4. Passive voice (AI tends to use more passive voice)
+        strong_count = sum(text_lower.count(phrase) for phrase in strong_ai_phrases)
+        if strong_count > 0:
+            ai_scores.append(min(strong_count * 0.8, 1.0))  # Directly indicates AI
+        else:
+            ai_scores.append(0.0)
+        
+        # 2. FORMAL TRANSITION WORDS (AI overuses these significantly)
+        formal_transitions = [
+            "furthermore", "moreover", "additionally", "consequently",
+            "ultimately", "notably", "specifically", "therefore",
+            "hence", "thus", "accordingly", "as such",
+            "in conclusion", "to summarize", "in summary",
+            "it must be noted", "it is worth noting", "it is important",
+            "the fact that", "the notion that", "the concept of",
+            "in light of", "by contrast", "in contrast", "on the other hand",
+            "it is clear", "it is evident", "it is important to note"
+        ]
+        
+        transition_count = sum(text_lower.count(t) for t in formal_transitions)
+        # Heavy use of transitions is strong AI indicator
+        # Boost the sensitivity: lower denominator = higher score
+        transition_score = min(transition_count / max(len(words) / 40, 1), 1.0)  # Was /50
+        ai_scores.append(transition_score * 0.95)  # Boosted weight
+        
+        # 3. PASSIVE VOICE (AI uses significantly more)
         passive_patterns = [
-            r'\bwas\s+\w+ed\b', r'\bbeen\s+\w+ed\b', r'\bis\s+\w+ed\b'
+            r'\bwas\s+\w{4,}ed\b',  # was + past participle (at least 4 letters)
+            r'\bbeen\s+\w{4,}ed\b', 
+            r'\bis\s+\w{4,}ed\b',
+            r'\bbeing\s+\w{4,}ed\b',
         ]
-        passive_count = sum(
-            len(re.findall(pattern, text)) for pattern in passive_patterns
-        )
-        passive_score = min(passive_count / max(len(words) / 10, 1), 1.0)
         
-        # Combine scores
-        ai_score = (phrase_score + transition_score + passive_score) / 3.0
+        passive_count = sum(
+            len(re.findall(pattern, text, re.IGNORECASE)) 
+            for pattern in passive_patterns
+        )
+        passive_score = min(passive_count / max(len(words) / 15, 1), 1.0)
+        ai_scores.append(passive_score * 0.7)
+        
+        # 4. FORMAL VOCABULARY PATTERNS
+        formal_words = [
+            "utilize", "facilitate", "implement", "optimize", "paradigm",
+            "framework", "methodology", "hypothesis", "phenomenon",
+            "phenomenon", "implications", "significant", "substantial",
+            "comprehensive", "systematic", "analytical", "intricate",
+            "endeavor", "endeavors", "purported", "endeavor"
+        ]
+        
+        formal_count = sum(text_lower.count(w) for w in formal_words)
+        formal_score = min(formal_count / max(len(words) / 40, 1), 1.0)
+        ai_scores.append(formal_score * 0.6)
+        
+        # 5. LACK OF CONTRACTIONS (AI avoids them)
+        contractions = ["don't", "can't", "won't", "isn't", "wasn't", "weren't", 
+                       "haven't", "hasn't", "couldn't", "shouldn't", "wouldn't",
+                       "i'm", "it's", "that's", "there's", "they're", "we're",
+                       "you're", "let's", "here's", "what's", "who's"]
+        
+        contraction_count = sum(text_lower.count(c) for c in contractions)
+        # Few contractions = AI (humans use many)
+        if len(words) > 20:
+            contraction_ratio = contraction_count / (len(words) / 100)
+            if contraction_ratio < 0.5:  # Less than 0.5 contractions per 100 words
+                ai_scores.append(0.6)
+            elif contraction_ratio > 2.0:
+                ai_scores.append(0.1)  # Lots of contractions = human
+            else:
+                ai_scores.append(0.3)
+        
+        # 6. REPETITION OF KEY PHRASES (AI repeats patterns)
+        sentences = re.split(r'[.!?]+', text)
+        sentences = [s.strip() for s in sentences if s.strip()]
+        
+        phrase_patterns = [
+            r"as (a|an) \w+",
+            r"this \w+ (is|shows|indicates|demonstrates)",
+            r"(in|during|throughout) \w+",
+        ]
+        
+        repeated_phrases = 0
+        for pattern in phrase_patterns:
+            matches = re.findall(pattern, text_lower)
+            if len(matches) > 2:  # Pattern repeats multiple times
+                repeated_phrases += min(len(matches), 5)
+        
+        phrase_score = min(repeated_phrases / 8.0, 1.0)
+        ai_scores.append(phrase_score * 0.5)
+        
+        # Calculate final score
+        ai_score = np.mean(ai_scores) if ai_scores else 0.5
+        
+        # Boost confidence if strong AI markers found
+        if strong_count > 0:
+            ai_score = min(ai_score + 0.3, 1.0)
         
         return {
-            "is_ai": ai_score > 0.5,
+            "is_ai": ai_score > 0.45,  # Lower threshold since this is specific
             "confidence": float(ai_score),
             "scores": {
-                "ai_phrases": float(phrase_score),
-                "transition_words": float(transition_score),
-                "passive_voice": float(passive_score)
+                "ai_phrases": float(ai_scores[0]) if len(ai_scores) > 0 else 0.0,
+                "transition_words": float(ai_scores[1]) if len(ai_scores) > 1 else 0.0,
+                "passive_voice": float(ai_scores[2]) if len(ai_scores) > 2 else 0.0,
+                "formal_vocabulary": float(ai_scores[3]) if len(ai_scores) > 3 else 0.0,
             },
             "details": {
-                "ai_phrase_count": ai_phrase_count,
+                "ai_phrase_count": strong_count,
                 "transition_count": transition_count,
                 "passive_voice_count": passive_count,
+                "formal_word_count": formal_count,
+                "contraction_count": contraction_count,
                 "method": "linguistic"
             }
         }

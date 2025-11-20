@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: plagplag
+      POSTGRES_PASSWORD: plagplag
+      POSTGRES_DB: plagdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plagplag"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  flower:
+    image: mher/flower:latest
+    ports:
+      - "5555:5555"
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379"
+      CELERY_RESULT_BACKEND: "redis://redis:6379"
+    depends_on:
+      - redis
+    command: celery -A tasks --broker=redis://redis:6379 flower --port=5555
+
+volumes:
+  postgres_data:
