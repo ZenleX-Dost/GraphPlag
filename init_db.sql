@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS documents (
     file_size BIGINT,
     file_hash VARCHAR(64) UNIQUE,
     content_type VARCHAR(50),
+    content TEXT,
+    added_to_corpus BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -149,6 +151,19 @@ CREATE INDEX IF NOT EXISTS idx_recorded_at ON metrics(recorded_at);
 CREATE INDEX IF NOT EXISTS idx_job_id_logs ON logs(job_id);
 CREATE INDEX IF NOT EXISTS idx_level ON logs(level);
 CREATE INDEX IF NOT EXISTS idx_created_at_logs ON logs(created_at);
+
+-- Document corpus table (for corpus feature)
+CREATE TABLE IF NOT EXISTS document_corpus (
+    corpus_id SERIAL PRIMARY KEY,
+    doc_id INTEGER UNIQUE REFERENCES documents(doc_id) ON DELETE CASCADE,
+    tags TEXT[],
+    category VARCHAR(100) DEFAULT 'general',
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_doc_id_corpus ON document_corpus(doc_id);
+CREATE INDEX IF NOT EXISTS idx_category_corpus ON document_corpus(category);
+CREATE INDEX IF NOT EXISTS idx_added_at_corpus ON document_corpus(added_at);
 
 -- Create materialized view for statistics
 CREATE VIEW document_stats AS

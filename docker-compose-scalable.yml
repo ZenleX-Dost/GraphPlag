@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # API Gateway - FastAPI
@@ -146,6 +146,7 @@ services:
     restart: unless-stopped
 
   # Celery Flower - Task Monitoring
+  # Celery Flower - Task Monitoring
   flower:
     image: mher/flower:2.0
     command: celery --broker=redis://redis:6379/0 flower
@@ -162,13 +163,14 @@ services:
 
   # Vector Database - Milvus
   milvus:
-    image: milvusdb/milvus:v0.24.0
+    image: milvusdb/milvus:v2.3.3
+    command: ["milvus", "run", "standalone"]
     ports:
       - "19530:19530"
       - "9091:9091"
     environment:
-      COMMON_STORAGETYPE: minio
       ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
     depends_on:
       - minio
       - etcd
@@ -232,7 +234,8 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -262,69 +265,69 @@ services:
     restart: unless-stopped
 
   # Spark Master
-  spark-master:
-    image: bitnami/spark:3.4.0
-    environment:
-      SPARK_MODE: master
-      SPARK_RPC_AUTHENTICATION_ENABLED: no
-      SPARK_RPC_ENCRYPTION_ENABLED: no
-    ports:
-      - "7077:7077"
-      - "8080:8080"
-    volumes:
-      - ./documents:/data/documents:ro
-      - ./spark_jobs:/app/spark_jobs
-    networks:
-      - graphplag-network
-    restart: unless-stopped
+  # spark-master:
+  #   image: bitnami/spark:3.5.0
+  #   environment:
+  #     SPARK_MODE: master
+  #     SPARK_RPC_AUTHENTICATION_ENABLED: no
+  #     SPARK_RPC_ENCRYPTION_ENABLED: no
+  #   ports:
+  #     - "7077:7077"
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./documents:/data/documents:ro
+  #     - ./spark_jobs:/app/spark_jobs
+  #   networks:
+  #     - graphplag-network
+  #   restart: unless-stopped
 
   # Spark Worker 1
-  spark-worker-1:
-    image: bitnami/spark:3.4.0
-    environment:
-      SPARK_MODE: worker
-      SPARK_MASTER_URL: spark://spark-master:7077
-      SPARK_RPC_AUTHENTICATION_ENABLED: no
-      SPARK_RPC_ENCRYPTION_ENABLED: no
-    depends_on:
-      - spark-master
-    volumes:
-      - ./documents:/data/documents:ro
-    networks:
-      - graphplag-network
-    restart: unless-stopped
+  # spark-worker-1:
+  #   image: bitnami/spark:3.5.0
+  #   environment:
+  #     SPARK_MODE: worker
+  #     SPARK_MASTER_URL: spark://spark-master:7077
+  #     SPARK_RPC_AUTHENTICATION_ENABLED: no
+  #     SPARK_RPC_ENCRYPTION_ENABLED: no
+  #   depends_on:
+  #     - spark-master
+  #   volumes:
+  #     - ./documents:/data/documents:ro
+  #   networks:
+  #     - graphplag-network
+  #   restart: unless-stopped
 
   # Spark Worker 2
-  spark-worker-2:
-    image: bitnami/spark:3.4.0
-    environment:
-      SPARK_MODE: worker
-      SPARK_MASTER_URL: spark://spark-master:7077
-      SPARK_RPC_AUTHENTICATION_ENABLED: no
-      SPARK_RPC_ENCRYPTION_ENABLED: no
-    depends_on:
-      - spark-master
-    volumes:
-      - ./documents:/data/documents:ro
-    networks:
-      - graphplag-network
-    restart: unless-stopped
+  # spark-worker-2:
+  #   image: bitnami/spark:3.5.0
+  #   environment:
+  #     SPARK_MODE: worker
+  #     SPARK_MASTER_URL: spark://spark-master:7077
+  #     SPARK_RPC_AUTHENTICATION_ENABLED: no
+  #     SPARK_RPC_ENCRYPTION_ENABLED: no
+  #   depends_on:
+  #     - spark-master
+  #   volumes:
+  #     - ./documents:/data/documents:ro
+  #   networks:
+  #     - graphplag-network
+  #   restart: unless-stopped
 
   # Spark Worker 3
-  spark-worker-3:
-    image: bitnami/spark:3.4.0
-    environment:
-      SPARK_MODE: worker
-      SPARK_MASTER_URL: spark://spark-master:7077
-      SPARK_RPC_AUTHENTICATION_ENABLED: no
-      SPARK_RPC_ENCRYPTION_ENABLED: no
-    depends_on:
-      - spark-master
-    volumes:
-      - ./documents:/data/documents:ro
-    networks:
-      - graphplag-network
-    restart: unless-stopped
+  # spark-worker-3:
+  #   image: bitnami/spark:3.5.0
+  #   environment:
+  #     SPARK_MODE: worker
+  #     SPARK_MASTER_URL: spark://spark-master:7077
+  #     SPARK_RPC_AUTHENTICATION_ENABLED: no
+  #     SPARK_RPC_ENCRYPTION_ENABLED: no
+  #   depends_on:
+  #     - spark-master
+  #   volumes:
+  #     - ./documents:/data/documents:ro
+  #   networks:
+  #     - graphplag-network
+  #   restart: unless-stopped
 
   # Monitoring - Prometheus
   prometheus:
@@ -335,7 +338,7 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+      - "--config.file=/etc/prometheus/prometheus.yml"
     networks:
       - graphplag-network
     restart: unless-stopped
