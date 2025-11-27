@@ -12,9 +12,7 @@ CREATE TABLE IF NOT EXISTS documents (
     file_hash VARCHAR(64) UNIQUE,
     content_type VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_file_name (file_name),
-    INDEX idx_created_at (created_at)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Analyses table - stores plagiarism analysis results
@@ -27,10 +25,7 @@ CREATE TABLE IF NOT EXISTS analyses (
     num_matches INTEGER DEFAULT 0,
     total_processing_time_ms INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_job_id (job_id),
-    INDEX idx_doc_id (doc_id),
-    INDEX idx_created_at (created_at)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Matches table - individual plagiarism matches
@@ -46,11 +41,7 @@ CREATE TABLE IF NOT EXISTS matches (
     combined_similarity_score FLOAT DEFAULT 0.0,
     matched_ai_score FLOAT DEFAULT 0.0,
     plagiarism_percentage FLOAT DEFAULT 0.0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_analysis_id (analysis_id),
-    INDEX idx_job_id (job_id),
-    INDEX idx_rank (rank),
-    INDEX idx_combined_score (combined_similarity_score)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Document embeddings metadata
@@ -60,9 +51,7 @@ CREATE TABLE IF NOT EXISTS document_embeddings (
     embedding_model VARCHAR(100),
     embedding_dim INTEGER,
     milvus_id BIGINT UNIQUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_doc_id (doc_id),
-    INDEX idx_milvus_id (milvus_id)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Job status tracking
@@ -74,9 +63,7 @@ CREATE TABLE IF NOT EXISTS job_status (
     message TEXT,
     eta_seconds INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_status (status),
-    INDEX idx_created_at (created_at)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Analysis results (for streaming)
@@ -84,8 +71,7 @@ CREATE TABLE IF NOT EXISTS analysis_results (
     result_id SERIAL PRIMARY KEY,
     job_id UUID UNIQUE REFERENCES job_status(job_id),
     data JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_job_id (job_id)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Batch processing jobs (Spark)
@@ -99,9 +85,7 @@ CREATE TABLE IF NOT EXISTS batch_jobs (
     started_at TIMESTAMP,
     completed_at TIMESTAMP,
     error_message TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_status (status),
-    INDEX idx_created_at (created_at)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Performance metrics
@@ -110,9 +94,7 @@ CREATE TABLE IF NOT EXISTS metrics (
     metric_name VARCHAR(100) NOT NULL,
     metric_value FLOAT,
     tags JSONB,
-    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_metric_name (metric_name),
-    INDEX idx_recorded_at (recorded_at)
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- System logs
@@ -122,16 +104,51 @@ CREATE TABLE IF NOT EXISTS logs (
     logger VARCHAR(100),
     message TEXT,
     job_id UUID,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_job_id (job_id),
-    INDEX idx_level (level),
-    INDEX idx_created_at (created_at)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes for common queries
-CREATE INDEX idx_matches_job_rank ON matches(job_id, rank);
-CREATE INDEX idx_analyses_ai_score ON analyses(ai_score);
-CREATE INDEX idx_documents_created ON documents(created_at DESC);
+
+-- Documents table indexes
+CREATE INDEX IF NOT EXISTS idx_file_name ON documents(file_name);
+CREATE INDEX IF NOT EXISTS idx_documents_created ON documents(created_at DESC);
+
+-- Analyses table indexes
+CREATE INDEX IF NOT EXISTS idx_job_id_analyses ON analyses(job_id);
+CREATE INDEX IF NOT EXISTS idx_doc_id_analyses ON analyses(doc_id);
+CREATE INDEX IF NOT EXISTS idx_created_at_analyses ON analyses(created_at);
+CREATE INDEX IF NOT EXISTS idx_analyses_ai_score ON analyses(ai_score);
+
+-- Matches table indexes  
+CREATE INDEX IF NOT EXISTS idx_analysis_id_matches ON matches(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_job_id_matches ON matches(job_id);
+CREATE INDEX IF NOT EXISTS idx_rank ON matches(rank);
+CREATE INDEX IF NOT EXISTS idx_combined_score ON matches(combined_similarity_score);
+CREATE INDEX IF NOT EXISTS idx_matches_job_rank ON matches(job_id, rank);
+
+-- Document embeddings indexes
+CREATE INDEX IF NOT EXISTS idx_doc_id_embeddings ON document_embeddings(doc_id);
+CREATE INDEX IF NOT EXISTS idx_milvus_id ON document_embeddings(milvus_id);
+
+-- Job status indexes
+CREATE INDEX IF NOT EXISTS idx_status ON job_status(status);
+CREATE INDEX IF NOT EXISTS idx_created_at_job_status ON job_status(created_at);
+
+-- Analysis results indexes
+CREATE INDEX IF NOT EXISTS idx_job_id_results ON analysis_results(job_id);
+
+-- Batch jobs indexes
+CREATE INDEX IF NOT EXISTS idx_status_batch ON batch_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_created_at_batch ON batch_jobs(created_at);
+
+-- Metrics indexes
+CREATE INDEX IF NOT EXISTS idx_metric_name ON metrics(metric_name);
+CREATE INDEX IF NOT EXISTS idx_recorded_at ON metrics(recorded_at);
+
+-- Logs indexes
+CREATE INDEX IF NOT EXISTS idx_job_id_logs ON logs(job_id);
+CREATE INDEX IF NOT EXISTS idx_level ON logs(level);
+CREATE INDEX IF NOT EXISTS idx_created_at_logs ON logs(created_at);
 
 -- Create materialized view for statistics
 CREATE VIEW document_stats AS
