@@ -1,4 +1,4 @@
-# Scaling GraphPlag: From 1-to-1 to 1-to-Millions
+﻿# Scaling GraphPlag: From 1-to-1 to 1-to-Millions
 
 ## Current State vs. Scalable Architecture
 
@@ -918,5 +918,6 @@ Cost per query: $3,200 / 30,000 = $0.11/query
 5. **Deploy to Cloud** - AWS/GCP Kubernetes cluster
 6. **Monitor & Scale** - Auto-scaling based on demand
 
-Your GraphPlag system can scale from 1-to-1 comparisons to searching **billions of documents in seconds**! 🚀
+Your GraphPlag system can scale from 1-to-1 comparisons to searching **billions of documents in seconds**! 
+
 

@@ -9,16 +9,16 @@ GraphPlag is an advanced plagiarism detection system that uses semantic graph re
 
 Moves beyond surface-level text comparison to capture deep semantic relationships, enabling detection of paraphrased plagiarism and cross-lingual semantic copying.
 
-## ✨ Features
+##  Features
 
-### 🎯 Plagiarism Detection
+### Plagiarism Detection
 - **Semantic Analysis**: Graph-based representation captures deep semantic relationships
 - **Dual Approach**: Combines Graph Kernels and GNN-based similarity computation
 - **Multilingual Support**: Cross-lingual plagiarism detection capabilities
 - **Paraphrase Robustness**: Detects plagiarism even with heavy paraphrasing
 - **Explainability**: Visualize which parts contributed to similarity scores
 
-### 🤖 AI-Generated Content Detection (NEW!)
+### AI-Generated Content Detection (NEW!)
 - **Multiple Methods**: Neural, statistical, linguistic, and ensemble detection
 - **High Accuracy**: 80-85% accuracy on AI-generated text
 - **Fast Analysis**: Statistical methods run in milliseconds
@@ -26,15 +26,16 @@ Moves beyond surface-level text comparison to capture deep semantic relationship
 - **Smart Recommendations**: Automatic actions based on findings
 
 ### Production Features
-- ⚡ **High Performance Caching**: 8x speedup with disk-based embedding cache
-- 📊 **Large File Support**: Handles 50MB+ documents with intelligent chunking
-- 🌐 **REST API**: FastAPI with authentication, async batch processing
-- 📄 **Professional Reports**: PDF and Excel exports with color-coded highlighting
-- 🎨 **Modern Web UI**: Beautiful Gradio interface + Enhanced version
+- **High Performance Caching**: 8x speedup with disk-based embedding cache
+- **Large File Support**: Handles 50MB+ documents with intelligent chunking
+- **REST API**: FastAPI with authentication, async batch processing
+- **Professional Reports**: PDF and Excel exports with color-coded highlighting
+- **Modern Web UI**: Beautiful Gradio interface + Enhanced version
+
 
 ## Installation
 
-### 🚀 One-Click Setup (Recommended)
+### One-Click Setup (Recommended)
 
 **Windows:**
 ```batch
@@ -49,7 +50,7 @@ chmod +x setup_local.sh
 
 This automatically installs **all features** with proper NumPy compatibility!
 
-### 📋 Manual Installation
+### Manual Installation
 
 ```bash
 # Clone the repository
@@ -130,9 +131,9 @@ curl -X POST "http://localhost:8000/compare/text" \
   -d '{"text1":"test","text2":"test","method":"kernel","threshold":0.7}'
 ```
 
-## 📚 Documentation
+## Documentation
 
-📖 **[Complete Documentation](DOCUMENTATION.md)** - Everything you need to know
+**[Complete Documentation](DOCUMENTATION.md)** - Everything you need to know
 
 Quick links:
 - Installation & Setup
@@ -171,7 +172,7 @@ graphplag/
 └── cli.py            # Command-line interface
 ```
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **NLP**: spaCy, Stanza, Transformers (Hugging Face), Sentence-Transformers
 - **Graph Processing**: NetworkX, PyTorch Geometric, GraKeL
@@ -180,7 +181,7 @@ graphplag/
 - **Report Generation**: ReportLab (PDF), OpenPyXL (Excel)
 - **Visualization**: Matplotlib, Plotly, PyVis
 
-## 📊 Performance Metrics
+## Performance Metrics
 
 | Metric | Value |
 |--------|-------|

@@ -28,7 +28,7 @@ texts = []
 for file_path in test_files:
     if Path(file_path).exists():
         try:
-            print(f"📄 Parsing: {file_path}")
+            print(f" Parsing: {file_path}")
             text = parser.parse_file(file_path)
             texts.append(text)
             print(f"   ✅ Extracted {len(text)} characters")
@@ -49,7 +49,7 @@ if len(texts) >= 2:
     
     detector = PlagiarismDetector(method='kernel', threshold=0.7)
     
-    print(f"\n📊 Comparing documents...")
+    print(f"\n Comparing documents...")
     report = detector.detect_plagiarism(texts[0], texts[1])
     
     print(f"\n✅ Analysis Complete!")

@@ -19,7 +19,7 @@
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### One Command for Everything
 
@@ -41,7 +41,7 @@ This single launcher provides:
 
 ---
 
-## 📦 Installation
+##  Installation
 
 ### Single Command Installation
 
@@ -74,7 +74,7 @@ Choose **[2] Fix NumPy Compatibility Issues** from the menu.
 
 ---
 
-## 🎯 Running the Application
+##  Running the Application
 
 ### Option 1: Interactive Menu (Recommended)
 
@@ -114,7 +114,7 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt
 
 ---
 
-## ✨ Features
+##  Features
 
 ### Core Plagiarism Detection
 - **Graph-based Analysis**: Uses syntactic dependency graphs
@@ -123,7 +123,7 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt
 - **Paraphrase Detection**: Detects heavily modified text
 - **Cross-lingual**: Compare documents in different languages
 
-### 🤖 AI-Generated Content Detection (NEW)
+###  AI-Generated Content Detection (NEW)
 - **Multiple Detection Methods**:
   - Neural-based detection (fine-tuned classifier)
   - Statistical analysis (word frequency, sentence patterns)
@@ -141,10 +141,10 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt
 - ✅ Supports batch analysis of multiple documents
 
 ### Performance
-- ⚡ **8x faster** with disk-based caching
-- 📊 **50MB+ files** supported with intelligent chunking
+-  **8x faster** with disk-based caching
+-  **50MB+ files** supported with intelligent chunking
 - 🔄 **Async processing** for batch operations
-- 💾 **Smart caching** with LRU eviction
+-  **Smart caching** with LRU eviction
 
 ### File Support
 - **Text Files**: .txt, .md
@@ -152,13 +152,13 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt
 - **Direct Input**: Paste text directly
 
 ### Output Formats
-- 📄 **PDF Reports**: Professional with highlighting
-- 📊 **Excel Reports**: Multi-sheet with color-coding
+-  **PDF Reports**: Professional with highlighting
+-  **Excel Reports**: Multi-sheet with color-coding
   - Red (90-100%): High similarity
   - Orange (70-89%): Medium similarity
   - Yellow (<70%): Low similarity
-- 🖥️ **Console Output**: Detailed text results
-- 📈 **Visual Graphs**: Similarity matrices, match highlights
+-  **Console Output**: Detailed text results
+-  **Visual Graphs**: Similarity matrices, match highlights
 
 ### Interfaces
 1. **Web UI** (Gradio): User-friendly, no coding required
@@ -169,7 +169,7 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt
 
 ---
 
-## 📖 Usage Examples
+##  Usage Examples
 
 ### 1. Web Interface (Easiest)
 
@@ -298,7 +298,7 @@ curl -X POST "http://localhost:8000/compare/text" \
   }'
 ```
 
-## 🤖 AI Detection Guide
+##  AI Detection Guide
 
 ### Overview
 
@@ -759,7 +759,7 @@ builder.clear_cache()
 
 ---
 
-## 📊 Configuration
+##  Configuration
 
 ### Environment Variables
 
@@ -839,7 +839,7 @@ If you use GraphPlag in your research, please cite:
 
 ---
 
-## 📄 License
+##  License
 
 MIT License - see LICENSE file for details
 
@@ -883,4 +883,4 @@ python cli.py compare --file1 doc1.txt --file2 doc2.txt --output report.pdf
 
 ---
 
-**GraphPlag - Detect plagiarism with graph kernels and machine learning** 🚀
+**GraphPlag - Detect plagiarism with graph kernels and machine learning** 

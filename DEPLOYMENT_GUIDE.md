@@ -1,4 +1,4 @@
-# GraphPlag Scalable Deployment Guide
+﻿# GraphPlag Scalable Deployment Guide
 
 ## Overview
 This guide walks you through deploying GraphPlag as a production-scale system capable of comparing documents against a massive database (millions of documents).

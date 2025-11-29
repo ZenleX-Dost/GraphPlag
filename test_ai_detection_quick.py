@@ -84,7 +84,7 @@ methods = ["ensemble", "neural", "statistical", "linguistic"]
 for method in methods:
     try:
         result = detector.detect_ai_content(test_text, method=method)
-        print(f"📊 {method.upper():15} → Confidence: {result['confidence']:.1%}")
+        print(f" {method.upper():15} → Confidence: {result['confidence']:.1%}")
     except Exception as e:
         print(f"⚠️ {method.upper():15} → Error: {e}")
 

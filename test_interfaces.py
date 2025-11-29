@@ -26,7 +26,7 @@ try:
     report = detector.detect_plagiarism(doc1, doc2)
     
     print(f"   ✅ Detection completed")
-    print(f"   📊 Similarity: {report.similarity_score:.2%}")
+    print(f"    Similarity: {report.similarity_score:.2%}")
     print(f"   ⚠️  Plagiarism: {'YES' if report.is_plagiarism else 'NO'}")
     
 except Exception as e:

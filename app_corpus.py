@@ -78,7 +78,7 @@ def add_to_corpus(file, tags_text: str, category: str):
 
 ---
 
-### 📊 Corpus Statistics
+###  Corpus Statistics
 - **Total Documents:** {stats.get('total_documents', 0)}
 - **Total Size:** {stats.get('total_size_bytes', 0) / 1024 / 1024:.2f} MB
 - **Embeddings in Milvus:** {stats.get('milvus_embeddings', 0)}
@@ -192,7 +192,7 @@ def get_stats():
         stats = corpus_manager.get_corpus_stats()
         
         output = f"""
-# 📊 Corpus Statistics
+#  Corpus Statistics
 
 ## Overview
 - **Total Documents:** {stats.get('total_documents', 0)}
@@ -224,7 +224,7 @@ def get_stats():
 with gr.Blocks(title="GraphPlag Corpus Manager", theme=gr.themes.Soft()) as app:
     
     gr.Markdown("""
-    # 📚 GraphPlag - Document Corpus Manager
+    #  GraphPlag - Document Corpus Manager
     
     Build a permanent document library and search for plagiarism against your entire corpus.
     
@@ -319,7 +319,7 @@ with gr.Blocks(title="GraphPlag Corpus Manager", theme=gr.themes.Soft()) as app:
             gr.Markdown("### View and manage your document corpus")
             
             with gr.Row():
-                stats_btn = gr.Button("📊 Get Statistics")
+                stats_btn = gr.Button(" Get Statistics")
                 refresh_btn = gr.Button("🔄 Refresh Table")
             
             stats_output = gr.Markdown()
@@ -355,7 +355,7 @@ if __name__ == "__main__":
         print("Please ensure graphplag.corpus package is installed.")
         exit(1)
     
-    print("🚀 Starting GraphPlag Corpus Manager...")
+    print(" Starting GraphPlag Corpus Manager...")
     print("⚠️  Make sure full Docker stack is running!")
     print("   Run: docker-compose -f docker-compose-scalable.yml up -d")
     
