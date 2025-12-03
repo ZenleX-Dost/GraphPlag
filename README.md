@@ -2,8 +2,6 @@
 
 > **Production-Grade Distributed System** capable of comparing documents against **10+ million records** with **sub-second latency**.
 
-![System Architecture](https://via.placeholder.com/800x400?text=GraphPlag+Scalable+Architecture)
-
 ## Overview
 
 GraphPlag has been transformed from a local script into a **distributed, containerized platform** designed for high-volume plagiarism and AI content detection. It leverages a microservices architecture to ensure scalability, reliability, and performance.
@@ -14,6 +12,52 @@ GraphPlag has been transformed from a local script into a **distributed, contain
 - **Concurrency**: Supports 100+ simultaneous users with auto-scaling workers.
 - **AI Detection**: Integrated neural, statistical, and linguistic analysis to detect AI-generated text (ChatGPT, Claude, etc.).
 - **Deep Analysis**: Uses Graph Kernels (Weisfeiler-Lehman) for structural similarity detection, catching paraphrased plagiarism.
+
+---
+
+## Getting Started (First Time Users)
+
+If you just cloned this repository, run the following command to set up everything automatically:
+
+```powershell
+.\run_first_timer.bat
+```
+
+This script will:
+1. Create a Python virtual environment
+2. Install all required dependencies
+3. Download the spaCy language model
+4. Start the backend API server on http://localhost:8000
+5. Start the web interface on http://localhost:7860
+
+### Prerequisites
+- Python 3.10 or higher
+- Windows OS (for the batch script)
+
+### Manual Setup (Alternative)
+If you prefer to set up manually or are on Linux/macOS:
+
+```bash
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Download language model
+python -m spacy download en_core_web_sm
+
+# Start the API server (in one terminal)
+python -m uvicorn api:app --host 0.0.0.0 --port 8000
+
+# Start the web interface (in another terminal)
+python app.py
+```
+
+### Access Points
+- **Web Interface**: http://localhost:7860
+- **API Documentation**: http://localhost:8000/docs
 
 ---
 
@@ -146,7 +190,7 @@ python cli.py detect-ai --file essay.txt
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables (`.env`)
 | Variable | Default | Description |
