@@ -190,6 +190,49 @@ python cli.py detect-ai --file essay.txt
 
 ---
 
+## Project Structure
+
+```
+GraphPlag/
+|-- graphplag/                    # Core library
+|   |-- core/                     # Graph construction and models
+|   |-- detection/                # Plagiarism and AI detection logic
+|   |-- similarity/               # Graph kernels and GNN models
+|   |-- embeddings/               # GNN-based document embeddings
+|   |-- corpus/                   # Database clients (Milvus, Elasticsearch, Postgres)
+|   |-- parser/                   # PDF and document parsing
+|   |-- utils/                    # Caching, file parsing, export utilities
+|   |-- compat/                   # GraKeL compatibility patches
+|   +-- configs/                  # Configuration files
+|
+|-- app.py                        # Gradio web interface
+|-- api.py                        # FastAPI REST API
+|-- cli.py                        # Command-line interface
+|-- tasks.py                      # Celery distributed tasks
+|-- celery_app.py                 # Celery configuration
+|
+|-- docker-compose-scalable.yml   # Full distributed stack (15 services)
+|-- docker-compose-minimal.yml    # Minimal local stack
+|-- Dockerfile.api                # API container
+|-- Dockerfile.worker             # Celery worker container
+|
+|-- k8s/                          # Kubernetes manifests
+|-- scripts/                      # Setup scripts (Milvus, Elasticsearch)
+|-- monitoring/                   # Prometheus and Grafana configs
+|
+|-- tests/                        # Unit tests
+|-- test_data/                    # Sample documents for testing
+|-- examples/                     # Usage examples
+|
+|-- requirements.txt              # Core dependencies
+|-- requirements-scalable.txt     # Distributed system dependencies
+|-- run_first_timer.bat           # First-time setup script (Windows)
+|-- run.bat                       # Interactive launcher
++-- quickstart.ps1                # Scalable deployment script
+```
+
+---
+
 ## Configuration
 
 ### Environment Variables (`.env`)
