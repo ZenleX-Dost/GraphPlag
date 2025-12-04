@@ -62,10 +62,10 @@ function Start-Services {
     Write-Header "Starting Docker Services"
     
     Write-Host "Building Docker images..." -ForegroundColor Cyan
-    docker-compose -f "$projectRoot\docker-compose-scalable.yml" build --no-cache
+    docker-compose -f "$projectRoot\docker\docker-compose-scalable.yml" build --no-cache
     
     Write-Host "Starting services..." -ForegroundColor Cyan
-    docker-compose -f "$projectRoot\docker-compose-scalable.yml" up -d
+    docker-compose -f "$projectRoot\docker\docker-compose-scalable.yml" up -d
     
     Write-Success "Services started"
     
@@ -135,18 +135,18 @@ function Show-Dashboard {
 
 function Show-Logs {
     Write-Header "Recent Logs"
-    docker-compose -f "$projectRoot\docker-compose-scalable.yml" logs --tail=20 api
+    docker-compose -f "$projectRoot\docker\docker-compose-scalable.yml" logs --tail=20 api
 }
 
 function Stop-Services {
     Write-Header "Stopping Services"
-    docker-compose -f "$projectRoot\docker-compose-scalable.yml" down -v
+    docker-compose -f "$projectRoot\docker\docker-compose-scalable.yml" down -v
     Write-Success "Services stopped"
 }
 
 function Show-Status {
     Write-Header "Service Status"
-    docker-compose -f "$projectRoot\docker-compose-scalable.yml" ps
+    docker-compose -f "$projectRoot\docker\docker-compose-scalable.yml" ps
 }
 
 function Test-API {
@@ -183,7 +183,7 @@ function Cleanup-All {
     $confirm = Read-Host "Continue? (yes/no)"
     
     if ($confirm -eq "yes") {
-        docker-compose -f "$projectRoot\docker-compose-scalable.yml" down -v --remove-orphans
+        docker-compose -f "$projectRoot\docker\docker-compose-scalable.yml" down -v --remove-orphans
         Write-Success "Cleanup complete"
     }
     else {

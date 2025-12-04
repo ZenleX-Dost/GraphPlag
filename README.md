@@ -112,7 +112,7 @@ graph TD
 *Or manually:*
 ```powershell
 pip install -r requirements-scalable.txt
-docker-compose -f docker-compose-scalable.yml up -d
+docker-compose -f docker/docker-compose-scalable.yml up -d
 python scripts/setup_milvus.py
 python scripts/setup_elasticsearch.py
 ```
@@ -205,24 +205,28 @@ GraphPlag/
 |   |-- compat/                   # GraKeL compatibility patches
 |   +-- configs/                  # Configuration files
 |
-|-- app.py                        # Gradio web interface
-|-- api.py                        # FastAPI REST API
-|-- cli.py                        # Command-line interface
-|-- tasks.py                      # Celery distributed tasks
-|-- celery_app.py                 # Celery configuration
-|
-|-- docker-compose-scalable.yml   # Full distributed stack (15 services)
-|-- docker-compose-minimal.yml    # Minimal local stack
-|-- Dockerfile.api                # API container
-|-- Dockerfile.worker             # Celery worker container
+|-- docker/                       # Docker configuration
+|   |-- docker-compose-scalable.yml   # Full distributed stack (15 services)
+|   |-- docker-compose-minimal.yml    # Minimal local stack
+|   |-- docker-compose-fast.yml       # Fast deployment stack
+|   |-- Dockerfile.api                # API container
+|   |-- Dockerfile.worker             # Celery worker container
+|   +-- init_db.sql                   # PostgreSQL schema
 |
 |-- k8s/                          # Kubernetes manifests
 |-- scripts/                      # Setup scripts (Milvus, Elasticsearch)
 |-- monitoring/                   # Prometheus and Grafana configs
-|
 |-- tests/                        # Unit tests
 |-- test_data/                    # Sample documents for testing
 |-- examples/                     # Usage examples
+|
+|-- app.py                        # Gradio web interface (main)
+|-- app_enhanced.py               # Enhanced web interface with AI detection
+|-- app_corpus.py                 # Corpus management interface
+|-- api.py                        # FastAPI REST API
+|-- cli.py                        # Command-line interface
+|-- tasks.py                      # Celery distributed tasks
+|-- celery_app.py                 # Celery configuration
 |
 |-- requirements.txt              # Core dependencies
 |-- requirements-scalable.txt     # Distributed system dependencies

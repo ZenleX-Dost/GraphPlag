@@ -29,6 +29,26 @@ file_parser = FileParser()
 comparison_history = []
 
 
+def create_empty_plot() -> go.Figure:
+    """Create an empty plot figure for error cases"""
+    fig = go.Figure()
+    fig.update_layout(
+        xaxis={'visible': False},
+        yaxis={'visible': False},
+        annotations=[{
+            'text': 'No data available',
+            'xref': 'paper',
+            'yref': 'paper',
+            'showarrow': False,
+            'font': {'size': 16, 'color': '#999'}
+        }],
+        height=400,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    return fig
+
+
 # Custom CSS for modern styling
 custom_css = """
 /* Main container styling */
@@ -132,6 +152,26 @@ custom_css = """
     background: #f8d7da;
     color: #721c24;
 }
+
+/* HTML Output styling for Plotly */
+.html-output {
+    width: 100% !important;
+}
+
+.html-output iframe {
+    width: 100% !important;
+    height: auto !important;
+}
+
+.plotly-graph-div {
+    width: 100% !important;
+    height: 400px !important;
+}
+
+.html-output svg {
+    width: 100% !important;
+    height: auto !important;
+}
 """
 
 
@@ -203,26 +243,30 @@ def extract_text_from_file(file) -> Tuple[str, str]:
 
 
 def compare_documents(doc1_text: str, doc1_file, doc2_text: str, doc2_file, 
-                     method: str, threshold: float, language: str) -> Tuple[str, str, str, str]:
-    """Compare two documents with enhanced visualization"""
+                     method: str, threshold: float, language: str) -> Tuple[str, go.Figure, go.Figure, str]:
+    """Compare two documents with enhanced visualization
+    
+    Returns:
+        Tuple of (result_html, gauge_figure, stats_figure, history_html)
+    """
     
     # Get document contents
     if doc1_file is not None:
         doc1, _ = extract_text_from_file(doc1_file)
-        if doc1.startswith(""):
-            return doc1, None, "", ""
+        if doc1.startswith("Error"):
+            return doc1, create_empty_plot(), create_empty_plot(), ""
     else:
         doc1 = doc1_text
     
     if doc2_file is not None:
         doc2, _ = extract_text_from_file(doc2_file)
-        if doc2.startswith(""):
-            return doc2, None, "", ""
+        if doc2.startswith("Error"):
+            return doc2, create_empty_plot(), create_empty_plot(), ""
     else:
         doc2 = doc2_text
     
     if not doc1 or not doc2:
-        return "Please provide both documents (either text or files)", None, "", ""
+        return "Please provide both documents (either text or files)", create_empty_plot(), create_empty_plot(), ""
     
     try:
         # Initialize detector
@@ -262,19 +306,27 @@ def compare_documents(doc1_text: str, doc1_file, doc2_text: str, doc2_file,
             "badge-success"
         )
         
+        # Determine verdict styling
+        verdict_bg = "#fee" if report.is_plagiarism else "#efe"
+        verdict_border = "#c00" if report.is_plagiarism else "#0c0"
+        verdict_text = "#c00" if report.is_plagiarism else "#0a0"
+        verdict_icon = "⚠️" if report.is_plagiarism else "✓"
+        verdict_label = "PLAGIARISM DETECTED" if report.is_plagiarism else "NO PLAGIARISM DETECTED"
+        
         result = f"""
         <div style="padding: 2rem; background: white; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <h2 style="color: #667eea; margin-bottom: 1.5rem;">Analysis Results</h2>
             
-            <div style="text-align: center; margin: 2rem 0;">
+            <!-- Big Verdict Box -->
+            <div style="text-align: center; padding: 2rem; background: {verdict_bg}; border: 4px solid {verdict_border}; border-radius: 12px; margin-bottom: 2rem;">
+                <div style="font-size: 3rem; margin-bottom: 0.5rem;">{verdict_icon}</div>
+                <div style="font-size: 2.5rem; font-weight: bold; color: {verdict_text}; margin-bottom: 1rem;">
+                    {verdict_label}
+                </div>
                 <div style="font-size: 4rem; font-weight: bold; color: {similarity_color};">
                     {report.similarity_score:.1%}
                 </div>
                 <div style="font-size: 1.2rem; color: #666; margin-top: 0.5rem;">
                     Similarity Score
-                </div>
-                <div class="result-badge {badge_class}" style="margin-top: 1rem; font-size: 1.1rem;">
-                    {'PLAGIARISM DETECTED' if report.is_plagiarism else 'NO PLAGIARISM'}
                 </div>
             </div>
             
@@ -350,16 +402,14 @@ def compare_documents(doc1_text: str, doc1_file, doc2_text: str, doc2_file,
         </div>
         """
         
-        # Create enhanced visualization
-        fig = create_enhanced_similarity_gauge(report.similarity_score, threshold)
-        
-        # Create detailed comparison chart
+        # Create enhanced visualizations - return as Figure objects
+        gauge_fig = create_enhanced_similarity_gauge(report.similarity_score, threshold)
         stats_fig = create_comparison_stats(doc1, doc2, report.similarity_score)
         
         # History display
         history_html = create_history_display()
         
-        return result, fig, stats_fig, history_html
+        return result, gauge_fig, stats_fig, history_html
         
     except Exception as e:
         import traceback
@@ -376,61 +426,41 @@ def compare_documents(doc1_text: str, doc1_file, doc2_text: str, doc2_file,
             </details>
         </div>
         """
-        return error_msg, None, None, ""
+        return error_msg, create_empty_plot(), create_empty_plot(), ""
 
 
 def create_enhanced_similarity_gauge(similarity: float, threshold: float) -> go.Figure:
     """Create an enhanced similarity gauge with better visuals"""
     fig = go.Figure()
     
+    # Determine gauge color based on similarity
+    gauge_color = (
+        "#dc3545" if similarity >= 0.9 else
+        "#fd7e14" if similarity >= 0.7 else
+        "#ffc107" if similarity >= 0.5 else
+        "#28a745"
+    )
+    
     # Main gauge
     fig.add_trace(go.Indicator(
-        mode="gauge+number+delta",
+        mode="gauge+number",
         value=similarity * 100,
-        domain={'x': [0, 1], 'y': [0.2, 1]},
-        title={'text': "<b>Similarity Score</b>", 'font': {'size': 24, 'color': '#667eea'}},
-        delta={'reference': threshold * 100, 'increasing': {'color': "#dc3545"}},
         number={'suffix': "%", 'font': {'size': 48}},
         gauge={
-            'axis': {'range': [None, 100], 'tickwidth': 2, 'tickcolor': "#667eea"},
-            'bar': {'color': "#667eea", 'thickness': 0.8},
-            'bgcolor': "white",
-            'borderwidth': 2,
-            'bordercolor': "#e0e0e0",
+            'axis': {'range': [0, 100]},
+            'bar': {'color': gauge_color},
             'steps': [
                 {'range': [0, 50], 'color': '#d4edda'},
                 {'range': [50, 70], 'color': '#fff3cd'},
-                {'range': [70, 90], 'color': '#f8d7da'},
-                {'range': [90, 100], 'color': '#f5c6cb'}
-            ],
-            'threshold': {
-                'line': {'color': "red", 'width': 6},
-                'thickness': 0.85,
-                'value': threshold * 100
-            }
+                {'range': [70, 90], 'color': '#ffd4da'},
+                {'range': [90, 100], 'color': '#ffb8c8'}
+            ]
         }
     ))
     
-    # Add annotation
-    interpretation = (
-        "Very High" if similarity >= 0.9 else
-        "High" if similarity >= 0.7 else
-        "Moderate" if similarity >= 0.5 else
-        "Low"
-    )
-    
-    fig.add_annotation(
-        text=f"<b>{interpretation} Similarity</b>",
-        x=0.5, y=0.1,
-        showarrow=False,
-        font=dict(size=20, color='#667eea')
-    )
-    
     fig.update_layout(
-        height=450,
-        margin=dict(l=30, r=30, t=80, b=30),
-        paper_bgcolor='rgba(0,0,0,0)',
-        font={'family': 'Inter, sans-serif'}
+        height=400,
+        margin=dict(l=20, r=20, t=60, b=20)
     )
     
     return fig
@@ -443,42 +473,37 @@ def create_comparison_stats(doc1: str, doc2: str, similarity: float) -> go.Figur
     
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=('Document Comparison', 'Similarity Breakdown'),
+        subplot_titles=('Document Metrics', 'Content Similarity'),
         specs=[[{'type': 'bar'}, {'type': 'pie'}]]
     )
     
     # Bar chart comparing document stats
-    categories = ['Characters', 'Words', 'Lines', 'Sentences']
-    doc1_values = [stats1['chars'], stats1['words'], stats1['lines'], stats1['sentences']]
-    doc2_values = [stats2['chars'], stats2['words'], stats2['lines'], stats2['sentences']]
+    categories = ['Words', 'Lines']
+    doc1_values = [stats1['words'], stats1['lines']]
+    doc2_values = [stats2['words'], stats2['lines']]
     
     fig.add_trace(
-        go.Bar(name='Document 1', x=categories, y=doc1_values, marker_color='#667eea'),
+        go.Bar(name='Doc 1', x=categories, y=doc1_values, marker_color='#4e73df'),
         row=1, col=1
     )
     fig.add_trace(
-        go.Bar(name='Document 2', x=categories, y=doc2_values, marker_color='#764ba2'),
+        go.Bar(name='Doc 2', x=categories, y=doc2_values, marker_color='#1cc88a'),
         row=1, col=1
     )
     
     # Pie chart for similarity breakdown
     fig.add_trace(
         go.Pie(
-            labels=['Similar Content', 'Unique Content'],
+            labels=['Similar', 'Unique'],
             values=[similarity * 100, (1 - similarity) * 100],
             marker=dict(colors=['#f8d7da', '#d4edda']),
-            hole=0.4
+            hole=0.4,
+            textinfo='percent'
         ),
         row=1, col=2
     )
     
-    fig.update_layout(
-        height=400,
-        showlegend=True,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font={'family': 'Inter, sans-serif'}
-    )
+    fig.update_layout(height=400, showlegend=True)
     
     return fig
 
@@ -531,19 +556,23 @@ def create_history_display() -> str:
 
 
 
-def analyze_ai_content(text_input: str, file_input, method: str) -> Tuple[str, go.Figure, go.Figure]:
-    """Analyze text for AI-generated content"""
+def analyze_ai_content(text_input: str, file_input, method: str) -> Tuple[str, go.Figure, Optional[go.Figure]]:
+    """Analyze text for AI-generated content
+    
+    Returns:
+        Tuple of (result_html, gauge_figure, details_figure)
+    """
     
     # Get document content
     if file_input is not None:
         text, _ = extract_text_from_file(file_input)
         if text.startswith("Error"):
-            return text, None, None
+            return text, create_empty_plot(), create_empty_plot()
     else:
         text = text_input
     
     if not text or len(text) < 10:
-        return "Please provide text to analyze (at least 10 characters)", None, None
+        return "Please provide text to analyze (at least 10 characters)", create_empty_plot(), create_empty_plot()
     
     try:
         # Initialize AI detector
@@ -683,7 +712,7 @@ def analyze_ai_content(text_input: str, file_input, method: str) -> Tuple[str, g
                 margin={'l': 150, 'r': 20, 't': 60, 'b': 20}
             )
         else:
-            details_fig = None
+            details_fig = create_empty_plot()
         
         return result_html, gauge_fig, details_fig
         
@@ -699,7 +728,7 @@ def analyze_ai_content(text_input: str, file_input, method: str) -> Tuple[str, g
             </p>
         </div>
         """
-        return error_html, None, None
+        return error_html, create_empty_plot(), create_empty_plot()
 
 
 def load_example(example_name: str) -> Tuple[str, str]:
@@ -792,8 +821,7 @@ with gr.Blocks(
                     gr.Markdown("#### Document 1")
                     doc1_file = gr.File(
                         label="Upload File",
-                        file_types=[".pdf", ".docx", ".txt", ".md", ".markdown"],
-                        file_count="single"
+                        file_types=[".pdf", ".docx", ".txt", ".md", ".markdown"]
                     )
                     doc1_input = gr.Textbox(
                         label="Or Paste Text",
@@ -807,8 +835,7 @@ with gr.Blocks(
                     gr.Markdown("#### Document 2")
                     doc2_file = gr.File(
                         label="Upload File",
-                        file_types=[".pdf", ".docx", ".txt", ".md", ".markdown"],
-                        file_count="single"
+                        file_types=[".pdf", ".docx", ".txt", ".md", ".markdown"]
                     )
                     doc2_input = gr.Textbox(
                         label="Or Paste Text",
@@ -842,20 +869,16 @@ with gr.Blocks(
             
             compare_btn = gr.Button(
                 "Analyze Documents",
-                variant="primary",
-                size="lg",
-                elem_classes="primary-button"
+                variant="primary"
             )
             
-            # Results
+            # Results - using HTML for text and Plot for visualizations
             with gr.Row():
                 result_output = gr.HTML(label="Analysis Results")
             
             with gr.Row():
-                with gr.Column():
-                    plot_output = gr.Plot(label="Similarity Gauge")
-                with gr.Column():
-                    stats_plot = gr.Plot(label="Document Comparison")
+                gauge_plot = gr.Plot(label="Similarity Gauge")
+                stats_plot = gr.Plot(label="Comparison Statistics")
             
             with gr.Row():
                 history_output = gr.HTML(label="Comparison History")
@@ -895,7 +918,7 @@ with gr.Blocks(
                 fn=compare_documents,
                 inputs=[doc1_input, doc1_file, doc2_input, doc2_file, 
                        method_single, threshold_single, language_single],
-                outputs=[result_output, plot_output, stats_plot, history_output]
+                outputs=[result_output, gauge_plot, stats_plot, history_output]
             )
         
         # Tab 2: Batch Compare (keeping original functionality)
@@ -931,7 +954,7 @@ with gr.Blocks(
                     label="Language"
                 )
             
-            batch_btn = gr.Button("Analyze Batch", variant="primary", size="lg")
+            batch_btn = gr.Button("Analyze Batch", variant="primary")
             
             with gr.Row():
                 batch_result_output = gr.Markdown(label="Results")
@@ -951,8 +974,7 @@ with gr.Blocks(
                     gr.Markdown("#### Text to Analyze")
                     ai_text_file = gr.File(
                         label="Upload File",
-                        file_types=[".pdf", ".docx", ".txt", ".md", ".markdown"],
-                        file_count="single"
+                        file_types=[".pdf", ".docx", ".txt", ".md", ".markdown"]
                     )
                     ai_text_input = gr.Textbox(
                         label="Or Paste Text",
@@ -975,18 +997,16 @@ with gr.Blocks(
             
             ai_analyze_btn = gr.Button(
                 "Analyze for AI Content",
-                variant="primary",
-                size="lg",
-                elem_classes="primary-button"
+                variant="primary"
             )
             
-            # AI Detection Results
+            # AI Detection Results - using HTML for text and Plot for visualizations
             with gr.Row():
                 ai_result_output = gr.HTML(label="AI Detection Results")
             
             with gr.Row():
                 ai_gauge_plot = gr.Plot(label="AI Confidence Gauge")
-                ai_details_plot = gr.Plot(label="Detailed Analysis")
+                ai_details_plot = gr.Plot(label="Detection Method Scores")
             
             # Event handlers for AI tab
             ai_text_input.change(
